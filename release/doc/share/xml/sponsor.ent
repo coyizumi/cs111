@@ -1,0 +1,41 @@
+<!-- -*- sgml -*-
+
+     $FreeBSD: releng/10.2/release/doc/share/xml/sponsor.ent 285901 2015-07-26 19:47:43Z gjb $
+
+     Sponsors of various works.
+
+     Please keep the entity list sorted alphabetically.
+
+-->
+
+<!ENTITY afrl		"AFRL">
+
+<!ENTITY citrix		"Citrix Systems">
+<!ENTITY citrix.rd	"Citrix Systems R&amp;D">
+
+<!ENTITY darpa		"DARPA">
+<!ENTITY darpa_afrl	"DARPA, AFRL">
+<!ENTITY dell		"Dell, Inc.">
+
+<!ENTITY ff		"The&nbsp;&os;&nbsp;Foundation">
+<!ENTITY ff.url		"https://www.FreeBSDFoundation.org/">
+
+<!ENTITY google		"Google">
+
+<!ENTITY intelcorp	"Intel Corporation">
+<!ENTITY ix		"iXsystems">
+
+<!ENTITY limelight	"Limelight Networks">
+<!ENTITY lsi		"LSI">
+
+<!ENTITY msostc		"Microsoft Open Source Technology Center">
+<!ENTITY multiplay	"Multiplay">
+
+<!ENTITY netflix	"Netflix">
+<!ENTITY netgate	"Netgate">
+
+<!ENTITY scaleengine	"ScaleEngine, Inc.">
+<!ENTITY solarflare	"Solarflare Communications, Inc.">
+<!ENTITY spectralogic	"Spectra Logic">
+
+<!ENTITY yandex		"Yandex LLC">

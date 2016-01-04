@@ -1,0 +1,7 @@
+# $FreeBSD: releng/10.2/tools/regression/sockets/unix_passfd/Makefile 281974 2015-04-25 05:31:52Z ngie $
+
+PROG=	unix_passfd
+MAN=
+WARNS?=	3
+
+.include <bsd.prog.mk>

@@ -1,0 +1,8 @@
+# $FreeBSD: releng/10.2/sys/arm/mv/std-pj4b.mv 278601 2015-02-11 22:47:48Z ian $
+
+files		"../mv/files.mv"
+cpu		CPU_MV_PJ4B
+machine 	arm	armv6
+makeoptions	CONF_CFLAGS="-march=armv7a -Wa,-march=armv7a"
+
+options		VM_MAXUSER_ADDRESS="(KERNBASE-(1024*1024*1024))"

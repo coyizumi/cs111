@@ -1,0 +1,10 @@
+# $FreeBSD: releng/10.2/sys/boot/Makefile.amd64 271135 2014-09-04 21:01:10Z emaste $
+
+SUBDIR+=		efi
+SUBDIR+=		libstand32
+SUBDIR+=		zfs
+SUBDIR+=		userboot
+
+.if ${MK_FORTH} != "no"
+SUBDIR+=		ficl32
+.endif
