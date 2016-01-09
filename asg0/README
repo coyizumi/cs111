@@ -1,0 +1,5 @@
+To build, run make or make all.
+
+To run, run the generated executable named "cat"
+
+Usage: cat [FILE]...
