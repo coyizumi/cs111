@@ -24,4 +24,4 @@ SPECIAL [()><|&;*]
 .
 %%
 
-char **getline() { return (char **) yylex(); }
+char **get_line() { return (char **) yylex(); }

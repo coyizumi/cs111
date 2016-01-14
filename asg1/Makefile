@@ -9,23 +9,26 @@
 # make spotless will remove object files and the executable file
 
 exec    = myshell
-OBJECTS = lex.yy.o myshell.o 
-CFLAGS  = -Wall -std=gnu11 -I.
+OBJECTS = lex.yy.o myshell.o
+CSOURCE = lex.yy.c myshell.c
+CFLAGS  = -Wall -std=gnu11
 LDLIBS  = -lfl
 CC      = cc
 
 LEX     = flex
-
+LEXGEN  = lex.yy.c
 
 all: $(exec)
 
-$(exec): $(OBJECTS)
+$(exec): $(CSOURCE)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 lex.yy.c: lex.l
 	$(LEX) -o $@ $^
 
 clean:
 	- rm $(OBJECTS)
+	- rm $(LEXGEN)
 
 spotless: clean
 	- rm $(exec)
