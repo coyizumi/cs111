@@ -21,10 +21,10 @@ LEXGEN  = lex.yy.c
 all: $(exec)
 
 $(exec): $(CSOURCE)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ $(CSOURCE) $(LDLIBS)
 
 lex.yy.c: lex.l
-	$(LEX) -o $@ $^
+	$(LEX) -o lex.yy.c lex.l
 
 clean:
 	- rm $(OBJECTS)
