@@ -81,9 +81,8 @@
 * How are processes scheduled?
 	* When they enter system
 		* Batch Systems
-			*Two types
-				* New job runs scheduler
-				* Scheduling done when job voluntarily gives up time
+			* New job runs scheduler
+			* Scheduling done when job voluntarily gives up time
 	* Fixed interval scheduling
 		* Necessary for interactive systems
 
@@ -93,12 +92,91 @@
 	* Balance: Keep all parts of system busy
 	* Batch
 		* Throughput
+			* Work/time
 		* Turnaround time
+			* Like response time, but for batch jobs
 		* CPU utilization
 	* Interactive
 		* Response time
+			* Can measure avg or other metrics
+			* Good to measure # times faster than certain time (measure # of outliers)
 		* Proportionality: meet user expectations
 	* Real time
 		* meet deadlines
 		* predictability 
-	
+
+## Types of Schedulers
+
+* Batch Schedulers
+	* First come, first served
+		* Jobs in order they arrive
+		* Simple
+		* Problem: long jobs delay those behind
+	* Shortest First
+		* Short jobs finish first, so long jobs do not cause delays
+		* Shortest remaining time first
+			* reevaluate when new job is finished
+		* Problem
+			* How to know how long a job is
+	* Three level scheduling
+		* Jobs in input queue until moved to mem
+			* Pick complementary Jobs: small/large; cpu heavy/io heavy
+		* CPU scheduler picks next job
+		* mem sched picks jobs to move from mem if out of memory
+* Interactive Schedulers
+	* Round Robin
+		* Each process gets fixed time slot (quantum)
+		* Rotate through ready processes
+		* Each makes progress
+		* What is a good amount of time?
+			* Too short: Wasteful
+			* Too long: not good for interactive
+			* Typically: 10-100ms
+	* Priority Scheduling
+		* Assign priority to each process
+			* "Ready" process with highest priority runs next
+		* Dynamic priorities
+			* Reduce when using lots of CPU time
+			* Increase on wait for I/O
+		* Often grouped into multiple queues based on priority
+			* Round robin within queues
+	* Shortest process next
+		* Run process that will finish soonest
+		* Guess time based on previous runs
+		* Not used because round robin works so well
+	* Lottery Scheduling
+		* Each process gets tickets for CPU time
+			* More tickets -> More time
+		* Each quantum, a random ticket is picked
+			* Can be implemented efficiently by using integer ranges for tickets
+		* Over time each process gets gets CPU m/n of the time
+			* m = # of tickets process has
+			* n = total # of tickets
+		* Tickets can be transferred
+			* Processes exchange tickets
+			* Clients to server
+			* Parents to children
+
+## Scheduling in FreeBSD
+
+Called ULE scheduler because file is sched_ule.c
+
+* Two Parts
+	* Low level
+		* Selects next thread from run queue
+		* Very fast
+	* High level
+		* Sets thread priority
+		* Selects processor to use
+		* Slower
+		* Runs infrequently
+		* Adjusts quantum and priority
+* Run queues only have ready threads
+	* Blocked threads placed in
+		* Turnstile: short-term
+		* sleep queue: med/long term
+	* Runnable thread that consumes quantum placed at end of queue
+
+## Policy VS Mechanism
+
+* Separate what must be done (policy) from how it is done (mechanism)
