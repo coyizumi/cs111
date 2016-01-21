@@ -107,6 +107,23 @@ int execute_commands (command_s *root)
 			execvp (root->argv[0], root->argv);
 		}
 	}
+	else if (root->following_special == '<')
+	{
+		char *filename = root->next->argv[0];
+		int pid;
+		if ((pid = fork()))
+		{
+			int status;
+			waitpid (-1, &status, 0);
+		}
+		else
+		{
+			int in_fd = open (filename, O_RDONLY);
+			close (STDIN_FILENO);
+			dup (in_fd);
+			execvp (root->argv[0], root->argv);
+		}
+	}
 	return 0;
 }
 
