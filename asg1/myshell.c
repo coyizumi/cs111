@@ -124,6 +124,37 @@ int execute_commands (command_s *root)
 			execvp (root->argv[0], root->argv);
 		}
 	}
+	else if (root->following_special == '|')
+	{
+		int pid;
+		int pipefd[2];
+		int status = pipe(pipefd);
+		int readfd = pipefd[0];
+		int writefd = pipefd[1];
+		if ((pid = fork()))
+		{
+			if ((pid = fork()))
+			{
+				int status;
+				waitpid (pid, &status, 0);
+			}
+			else
+			{
+				if (root->next)
+				{
+					close (STDIN_FILENO);
+					dup (readfd);
+					execvp (root->next->argv[0], root->next->argv);
+				}
+			}
+		}
+		else
+		{
+			close (STDOUT_FILENO);
+			dup (writefd);
+			execvp (root->argv[0], root->argv);
+		}
+	}
 	return 0;
 }
 
