@@ -6,6 +6,8 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 extern char **get_line();
 
@@ -83,6 +85,25 @@ int execute_commands (command_s *root)
 		}
 		else
 		{
+			execvp (root->argv[0], root->argv);
+		}
+	}
+	else if (root->following_special == '>')
+	{
+		char *filename = root->next->argv[0];
+		int pid;
+		if ((pid = fork()))
+		{
+			int status;
+			waitpid (-1, &status, 0);
+		}
+		else
+		{
+			// Open filename. Create if not already created, open for writing only.
+			// If creating the file, give the user read and write permissions
+			int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+			close (STDOUT_FILENO);
+			dup (out_fd);
 			execvp (root->argv[0], root->argv);
 		}
 	}
