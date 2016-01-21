@@ -15,6 +15,12 @@ char *commands[] = {"exit", NULL};
 // Enumerate all internal commands
 enum {EXIT} command;
 
+typedef struct command_s {
+	char **argv;
+	char following_special;
+	struct command_s* next;
+} command_s;
+
 int check_commands (char **args) {
 	// Check if args[0] is an internal command
 	for (int i = 0; commands[i] != NULL; i++) {
@@ -29,6 +35,15 @@ int check_commands (char **args) {
 	return 0;
 }
 
+int check_special (char *str) {
+	for (int i = 0; specials[i] != NULL; i++) {
+		if (str && strcmp(str, specials[i]) == 0) {
+			return str[0];
+		}
+	}
+	return 0;
+}
+
 int parse_args (char **args) {
 	int command_status = check_commands(args);
 	switch (command_status) {
@@ -37,6 +52,10 @@ int parse_args (char **args) {
 	}
 	for(int i = 0; args[i] != NULL; i++) {
  		printf("Argument %d: %s\n", i, args[i]);
+ 		int special = check_special (args[i]);
+ 		if (special) {
+ 			printf ("Special is: %c\n", special);
+ 		}
  		free (args[i]);
  	}
  	return 0;

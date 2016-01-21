@@ -24,7 +24,7 @@ $(exec): $(CSOURCE)
 	$(CC) $(CFLAGS) -o $@ $(CSOURCE) $(LDLIBS)
 
 lex.yy.c: lex.l
-	$(LEX) -o lex.yy.c lex.l
+	$(LEX) -o $(LEXGEN) lex.l
 
 clean:
 	- rm $(OBJECTS)
