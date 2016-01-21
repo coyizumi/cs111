@@ -71,6 +71,24 @@ int check_special (char *str)
 	return 0;
 }
 
+int execute_commands (command_s *root)
+{
+	if (root->following_special == 0)
+	{
+		int pid;
+		if ((pid = fork()))
+		{
+			int status;
+			waitpid (-1, &status, 0);
+		}
+		else
+		{
+			execvp (root->argv[0], root->argv);
+		}
+	}
+	return 0;
+}
+
 int parse_args (char **args) 
 {
 	int command_status = check_commands(args);
@@ -92,6 +110,7 @@ int parse_args (char **args)
 		}
  	}
  	print_command_s (root);
+ 	execute_commands(root);
  	return 0;
 }
 
