@@ -11,13 +11,13 @@
 
 extern char **get_line();
 
+char *exec_name;
+
 // Keep track of all special characters
 char *specials[] = {"(", ")", "<", ">", "|", "&", ";", NULL};
-// Keep track of all internal commands
-char *commands[] = {"exit", NULL};
-// Enumerate all internal commands
-enum {EXIT} command;
 
+// Keeps track of an argv for a command, a trailing special character, and
+// acts as a linked list for chains of commands.
 typedef struct command_s 
 {
 	char **argv;
@@ -25,6 +25,7 @@ typedef struct command_s
 	struct command_s* next;
 } command_s;
 
+// Prints the contents of the given command_s
 void print_command_s (command_s *cmd)
 {
 	if (cmd == NULL) return;
@@ -37,6 +38,7 @@ void print_command_s (command_s *cmd)
 	print_command_s (cmd->next);
 }
 
+// Create and return a new command_s with argv as its argument vector
 command_s *new_command_s (char **argv)
 {
 	command_s *new_cmd = malloc (sizeof (*new_cmd));
@@ -46,21 +48,33 @@ command_s *new_command_s (char **argv)
 	return new_cmd;
 }
 
+// Free memory associated with a command_s, including argv
+void free_commands (command_s *root)
+{
+	if (root == NULL) return;
+	for (int i = 0; root->argv[i]; i++)
+	{
+		free (root->argv[i]);
+	}
+	command_s *next = root->next;
+	free (root);
+	free_commands(next);
+}
+
+// Checks for built in commands and performs them
+// Returns 0 on success, -1 on failure
 int check_commands (char **args) 
 {
-	// Check if args[0] is an internal command
-	for (int i = 0; commands[i] != NULL; i++) {
-		// If it is, reference the enum to see which it is and perform appropriate action
-		if (args[0] && strcmp(args[0], commands[i]) == 0) {
-			switch (i) {
-				case EXIT: exit(0);
-			}
-			return 1;
-		}
+	if (args[0] && strcmp (args[0], "exit") == 0)
+	{
+		exit(0);
 	}
 	return 0;
 }
 
+// Checks to see if the given string is a special character
+// If it is, returns an integer representing that character
+// Else, returns 0
 int check_special (char *str) 
 {
 	for (int i = 0; specials[i] != NULL; i++) 
@@ -73,6 +87,8 @@ int check_special (char *str)
 	return 0;
 }
 
+// Given a command_s, exectures the chain of commands represented by that
+// command_s.
 int execute_commands (command_s *root)
 {
 	if (root->following_special == 0)
@@ -158,6 +174,7 @@ int execute_commands (command_s *root)
 	return 0;
 }
 
+// Parses the line of arguments to execute the desired command
 int parse_args (char **args) 
 {
 	int command_status = check_commands(args);
@@ -174,20 +191,25 @@ int parse_args (char **args)
 		if (special)
 		{
 			curr->following_special = special;
+			free (args[i]);
 			args[i] = NULL;
 			curr->next = new_command_s (args + i + 1);
 		}
  	}
  	print_command_s (root);
  	execute_commands(root);
+ 	free_commands(root);
  	return 0;
 }
 
-int main() 
+int main(int argc, char **argv) 
 {
+	exec_name = argv[0];
  	char **args; 
+ 	printf ("$ ");
  	while((args = get_line())) 
  	{
  		parse_args (args);
+ 		printf ("$ ");
  	}
 }
