@@ -1,4 +1,5 @@
 %{
+#define YY_DECL char** yylex(void)
 int _numargs = 10;
 char *_args[10];
 int _argcount = 0;
@@ -19,7 +20,7 @@ SPECIAL [()><|&;*]
     }
 }
 
-\n return (int)_args;
+\n return _args;
 [ \t]+
 .
 %%
