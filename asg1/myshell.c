@@ -127,58 +127,70 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
 }
 
 // Given a command_s, exectures the chain of commands represented by command_s.
-int execute_commands (command_s *root)
+int execute_commands (int readfd, command_s *root)
 {
+	if (root == NULL) return 0;
 	int pid = 0;
 	if (root->following_special == 0)
 	{
-		pid = fork_and_exec(STDIN_FILENO, STDOUT_FILENO, root->argv[0], root->argv);
+		pid = fork_and_exec(readfd, STDOUT_FILENO, root->argv[0], root->argv);
 	}
 	else if (root->following_special == '>')
 	{
+		if (!(root->next) && !(root->next->argv[0]))
+		{
+			fprintf (stderr, "%s: No output file specified\n", exec_name);
+			return 0;
+		}
 		char *filename = root->next->argv[0];
 		int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-		pid = fork_and_exec (STDIN_FILENO, out_fd, root->argv[0], root->argv);
+		pid = fork_and_exec (readfd, out_fd, root->argv[0], root->argv);
 		close (out_fd);
+		root = root->next;
 	}
 	else if (root->following_special == '<')
 	{
+		if (!(root->next) && !(root->next->argv[0]))
+		{
+			fprintf (stderr, "%s: No input file specified\n", exec_name);
+			return 0;
+		}
 		char *filename = root->next->argv[0];
 		int in_fd = open (filename, O_RDONLY);
 		pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
 		close (in_fd);
+		root = root->next;
 	}
 	else if (root->following_special == '|')
 	{
+		if (!(root->next) && !(root->next->argv[0]))
+		{
+			fprintf (stderr, "%s: No command to pipe to\n", exec_name);
+			return 0;
+		}
 		int pipefd[2];
 		int status = pipe(pipefd);
-		int readfd = pipefd[0];
-		int writefd = pipefd[1];
-		if ((pid = fork()))
+		int read_pipe = pipefd[0];
+		int write_pipe = pipefd[1];
+
+		pid = fork_and_exec(readfd, write_pipe, root->argv[0], root->argv);
+		close (write_pipe);
+		if (readfd != STDIN_FILENO)
 		{
-			if ((pid = fork()))
+			if (close (readfd))
 			{
-				close (readfd); close (writefd);
-				int status;
-				waitpid (pid, &status, 0);
-			}
-			else
-			{
-				if (root->next)
-				{
-					close (STDIN_FILENO);
-					close (writefd);
-					dup (readfd);
-					execvp (root->next->argv[0], root->next->argv);
-				}
+				perror (exec_name);
+				exit(1);
 			}
 		}
-		else
+		return execute_commands (read_pipe, root->next);
+	}
+	if (readfd != STDIN_FILENO)
+	{
+		if (close (readfd))
 		{
-			close (STDOUT_FILENO);
-			close (readfd);
-			dup (writefd);
-			execvp (root->argv[0], root->argv);
+			perror (exec_name);
+			exit(1);
 		}
 	}
 	int status = 0;
@@ -187,6 +199,8 @@ int execute_commands (command_s *root)
 		int status = 0;
 		waitpid (pid, &status, 0);
 	}
+	if (root->following_special == ';')
+		return execute_commands(STDIN_FILENO, root->next);
 	return status;
 }
 
@@ -210,10 +224,11 @@ int parse_args (char **args)
 			free (args[i]);
 			args[i] = NULL;
 			curr->next = new_command_s (args + i + 1);
+			curr = curr->next;
 		}
  	}
  	print_command_s (root);
- 	execute_commands(root);
+ 	execute_commands(STDIN_FILENO, root);
  	free_commands(root);
  	return 0;
 }
