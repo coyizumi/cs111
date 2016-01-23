@@ -10,6 +10,7 @@
 #include <fcntl.h>
 
 extern char **get_line();
+extern int yylex_destroy();
 
 char *exec_name;
 
@@ -87,8 +88,7 @@ int check_special (char *str)
 	return 0;
 }
 
-// Given a command_s, exectures the chain of commands represented by that
-// command_s.
+// Given a command_s, exectures the chain of commands represented by command_s.
 int execute_commands (command_s *root)
 {
 	if (root->following_special == 0)
@@ -151,6 +151,7 @@ int execute_commands (command_s *root)
 		{
 			if ((pid = fork()))
 			{
+				close (readfd); close (writefd);
 				int status;
 				waitpid (pid, &status, 0);
 			}
@@ -159,6 +160,7 @@ int execute_commands (command_s *root)
 				if (root->next)
 				{
 					close (STDIN_FILENO);
+					close (writefd);
 					dup (readfd);
 					execvp (root->next->argv[0], root->next->argv);
 				}
@@ -167,6 +169,7 @@ int execute_commands (command_s *root)
 		else
 		{
 			close (STDOUT_FILENO);
+			close (readfd);
 			dup (writefd);
 			execvp (root->argv[0], root->argv);
 		}
@@ -212,4 +215,6 @@ int main(int argc, char **argv)
  		parse_args (args);
  		printf ("$ ");
  	}
+ 	// Clean up scanner memory
+ 	yylex_destroy();
 }
