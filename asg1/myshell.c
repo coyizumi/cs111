@@ -43,6 +43,11 @@ void print_command_s (command_s *cmd)
 command_s *new_command_s (char **argv)
 {
 	command_s *new_cmd = malloc (sizeof (*new_cmd));
+	if (new_cmd == NULL)
+	{
+		perror(exec_name);
+		exit(1);
+	}
 	new_cmd->argv = argv;
 	new_cmd->following_special = 0;
 	new_cmd->next = NULL;
@@ -88,61 +93,63 @@ int check_special (char *str)
 	return 0;
 }
 
+int fork_and_exec (int readfd, int writefd, char *path, char **argv)
+{
+	int pid = fork();
+	// If fork failed
+	if (pid < 0)
+	{
+		perror (exec_name);
+		exit (1);
+	}
+	// If we're child
+	else if (pid == 0)
+	{
+		if (readfd != STDIN_FILENO)
+		{
+			close (STDIN_FILENO);
+			dup (readfd);
+		}
+		if (writefd != STDOUT_FILENO)
+		{
+			close (STDOUT_FILENO);
+			dup (writefd);
+		}
+		// If execvp returns, something horrible happened
+		if (execvp (path, argv))
+		{
+			perror (exec_name);
+			exit (1);
+		}
+	}
+	// If we're the parent
+	return pid;
+}
+
 // Given a command_s, exectures the chain of commands represented by command_s.
 int execute_commands (command_s *root)
 {
+	int pid;
 	if (root->following_special == 0)
 	{
-		int pid;
-		if ((pid = fork()))
-		{
-			int status;
-			waitpid (-1, &status, 0);
-		}
-		else
-		{
-			execvp (root->argv[0], root->argv);
-		}
+		pid = fork_and_exec(STDIN_FILENO, STDOUT_FILENO, root->argv[0], root->argv);
 	}
 	else if (root->following_special == '>')
 	{
 		char *filename = root->next->argv[0];
-		int pid;
-		if ((pid = fork()))
-		{
-			int status;
-			waitpid (-1, &status, 0);
-		}
-		else
-		{
-			// Open filename. Create if not already created, open for writing only.
-			// If creating the file, give the user read and write permissions
-			int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-			close (STDOUT_FILENO);
-			dup (out_fd);
-			execvp (root->argv[0], root->argv);
-		}
+		int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+		pid = fork_and_exec (STDIN_FILENO, out_fd, root->argv[0], root->argv);
+		close (out_fd);
 	}
 	else if (root->following_special == '<')
 	{
 		char *filename = root->next->argv[0];
-		int pid;
-		if ((pid = fork()))
-		{
-			int status;
-			waitpid (-1, &status, 0);
-		}
-		else
-		{
-			int in_fd = open (filename, O_RDONLY);
-			close (STDIN_FILENO);
-			dup (in_fd);
-			execvp (root->argv[0], root->argv);
-		}
+		int in_fd = open (filename, O_RDONLY);
+		pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
+		close (in_fd);
 	}
 	else if (root->following_special == '|')
 	{
-		int pid;
 		int pipefd[2];
 		int status = pipe(pipefd);
 		int readfd = pipefd[0];
@@ -174,6 +181,8 @@ int execute_commands (command_s *root)
 			execvp (root->argv[0], root->argv);
 		}
 	}
+	int status = 0;
+	waitpid (pid, &status, 0);
 	return 0;
 }
 
