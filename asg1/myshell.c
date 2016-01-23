@@ -107,6 +107,7 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
 	// If we're child
 	else if (pid == 0)
 	{
+		// If readfd or writefd is other than default, dup it
 		if (readfd != STDIN_FILENO)
 		{
 			close (STDIN_FILENO);
@@ -117,7 +118,7 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
 			close (STDOUT_FILENO);
 			dup (writefd);
 		}
-		// If execvp returns, something horrible happened
+		// If execvp returns, something horrible has happened
 		if (execvp (path, argv))
 		{
 			perror (exec_name);
@@ -131,52 +132,68 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
 // Given a command_s, exectures the chain of commands represented by command_s.
 int execute_commands (int readfd, command_s *root)
 {
+	// May be null if line ends in a ;
 	if (root == NULL) return 0;
 	int pid = 0;
+	// No IO redirects
 	if (root->following_special == 0)
 	{
 		pid = fork_and_exec(readfd, STDOUT_FILENO, root->argv[0], root->argv);
 	}
+	// Redirect to file
 	else if (root->following_special == '>')
 	{
+		// Check that root->next is valid
 		if (!(root->next) && !(root->next->argv[0]))
 		{
 			fprintf (stderr, "%s: No output file specified\n", exec_name);
 			return 0;
 		}
+		// Open file (create it as user read and writable if it doesn't exist)
 		char *filename = root->next->argv[0];
 		int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 		pid = fork_and_exec (readfd, out_fd, root->argv[0], root->argv);
 		close (out_fd);
+		// Move root forward to next so we can check for semicolons
 		root = root->next;
 	}
+	// Get input from file
 	else if (root->following_special == '<')
 	{
+		// Check that root->next is valid
 		if (!(root->next) && !(root->next->argv[0]))
 		{
 			fprintf (stderr, "%s: No input file specified\n", exec_name);
 			return 0;
 		}
+		// Open file to read
 		char *filename = root->next->argv[0];
 		int in_fd = open (filename, O_RDONLY);
 		pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
 		close (in_fd);
+		// Move root forward to next so we can check for semicolons
 		root = root->next;
 	}
+	// Pipe
 	else if (root->following_special == '|')
 	{
+		// Check that root->next is valid
 		if (!(root->next) && !(root->next->argv[0]))
 		{
 			fprintf (stderr, "%s: No command to pipe to\n", exec_name);
 			return 0;
 		}
+		// Create pipe
 		int pipefd[2];
 		int status = pipe(pipefd);
 		int read_pipe = pipefd[0];
 		int write_pipe = pipefd[1];
 
+		// Fork first process
 		pid = fork_and_exec(readfd, write_pipe, root->argv[0], root->argv);
+		// Close write_pipe as parent
 		close (write_pipe);
+		// If readfd is from a pipe, close it
 		if (readfd != STDIN_FILENO)
 		{
 			if (close (readfd))
@@ -185,8 +202,11 @@ int execute_commands (int readfd, command_s *root)
 				exit(1);
 			}
 		}
+		// Recursively execute the commands after the pipe, giving the read end of the pipe
+		// as the fd to read from
 		return execute_commands (read_pipe, root->next);
 	}
+	// If we got our input from a pipe, close that input
 	if (readfd != STDIN_FILENO)
 	{
 		if (close (readfd))
@@ -195,12 +215,14 @@ int execute_commands (int readfd, command_s *root)
 			exit(1);
 		}
 	}
+	// If we executed a command, wait for it
 	int status = 0;
 	if (pid)
 	{
 		int status = 0;
 		waitpid (pid, &status, 0);
 	}
+	// If there is a semicolon, execute the command(s) following the semicolon
 	if (root->following_special == ';')
 		return execute_commands(STDIN_FILENO, root->next);
 	return status;
@@ -209,16 +231,21 @@ int execute_commands (int readfd, command_s *root)
 // Parses the line of arguments to execute the desired command
 int parse_args (char **args) 
 {
+	// Check for built-in commands, and exit if found
 	int command_status = check_commands(args);
 	switch (command_status) 
 	{
 		case 1: return 0;
 		case -1: return -1;
 	}
+	// Create datastructure to hold command list
 	command_s *root = new_command_s (args);
 	command_s *curr = root;
+	// Run through args and build command list
 	for(int i = 0; args[i] != NULL; i++) 
 	{
+		// Special characters will be nulled and act as delimeters between
+		// the argument vectors of each individual command
 		int special = check_special (args[i]);
 		if (special)
 		{
