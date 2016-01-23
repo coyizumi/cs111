@@ -14,7 +14,7 @@
 exec    = myshell
 OBJECTS = lex.yy.o myshell.o
 CSOURCE = lex.yy.c myshell.c
-CFLAGS  = -Wall -std=gnu11
+CFLAGS  = -Wall -std=gnu11 -g
 LDLIBS  = -lfl
 CC      = cc
 

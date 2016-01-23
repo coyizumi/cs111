@@ -129,7 +129,7 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
 // Given a command_s, exectures the chain of commands represented by command_s.
 int execute_commands (command_s *root)
 {
-	int pid;
+	int pid = 0;
 	if (root->following_special == 0)
 	{
 		pid = fork_and_exec(STDIN_FILENO, STDOUT_FILENO, root->argv[0], root->argv);
@@ -182,8 +182,12 @@ int execute_commands (command_s *root)
 		}
 	}
 	int status = 0;
-	waitpid (pid, &status, 0);
-	return 0;
+	if (pid)
+	{
+		int status = 0;
+		waitpid (pid, &status, 0);
+	}
+	return status;
 }
 
 // Parses the line of arguments to execute the desired command
