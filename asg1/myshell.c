@@ -73,6 +73,8 @@ int check_commands (char **args)
 {
 	if (args[0] && strcmp (args[0], "exit") == 0)
 	{
+		for (int i = 0; args[i]; i++) free (args[i]);
+		yylex_destroy();
 		exit(0);
 	}
 	return 0;
@@ -227,7 +229,6 @@ int parse_args (char **args)
 			curr = curr->next;
 		}
  	}
- 	print_command_s (root);
  	execute_commands(STDIN_FILENO, root);
  	free_commands(root);
  	return 0;
