@@ -100,7 +100,8 @@ case no special character:
 case <: 
 	Read: The specified file
 	Write: stdout OR the write end of a pipe (if a pipe follows the specified
-		   file in the command_s list)
+		   file in the command_s list) OR an output file (if > follows
+		   the specified file in the command_s list)
 case >: 
 	Read: readfd
 	Write: The specified file
