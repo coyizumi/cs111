@@ -10,7 +10,7 @@ WORD [a-zA-Z0-9\/\.-]+
 SPECIAL [()><|&;*]
 
 %%
-    _argcount = 0; _args[0] = NULL; 
+    _argcount = 0; _args[0] = NULL;
 
 {WORD}|{SPECIAL} { 
 
@@ -27,3 +27,5 @@ SPECIAL [()><|&;*]
 %%
 
 char **get_line() { return yylex(); }
+
+void lex_cleanup() { yylex_destroy(); }
