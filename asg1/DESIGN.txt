@@ -3,10 +3,8 @@
 # Scanner
 
 ------------------------------------------------------------------------------
-Limitations
-
-The scanner keeps track of an array of 100 strings. This array is always NULL
-terminated, so the scanner can handle lines containing up to 99 words.
+Exports the read_line() function, which reads from stdin one line at a time
+and splits each line into an array of individual words and special characters.
 ------------------------------------------------------------------------------
 
 # Data Structures
