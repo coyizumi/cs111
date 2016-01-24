@@ -1,0 +1,52 @@
+# Data Structures
+
+## command_s
+
+Used to create a linked list of commands. Each node contains an argument
+vector (argv), a trailing special character (following_special), and a link
+to the next node.
+
+The argument vector is either a command (including arguments), or a filename
+if the preceding command ended with a > or <.
+
+Trailing special characters are kept track of in order to support input/output
+redirection through >, <, and |.
+
+A linked list is used because it is easy to set up and allows chains of piped
+commands to be executed using recursion (see the execute_command() function).
+
+The functions new_command_s() is used to create a command_s. It takes in the
+argument vector of a command as its argument.
+
+The function free_command_s() frees all of the memory associated with the
+given command_s, including the argument vector and all accessable links.
+
+The function print_command_s() prints all the command_s structures in the 
+list. It was used in previous versions for debugging.
+
+# Utility Functions
+
+------------------------------------------------------------------------------
+int check_commands (char **args)
+
+Checks the first entry in the given argument
+vector for built-in commands (currently only exit is supported). If a built-in
+command is found, it is executed.
+Returns 1 on completion of a command, -1 on failure, and 0 if no command is
+executed.
+------------------------------------------------------------------------------
+int check_special (char *str)
+
+Checks the given string to see if it contains a special character (<,>,|).
+Returns an integer represention of the special character if one is found,
+otherwise returns 0.
+------------------------------------------------------------------------------
+int fork_and_exec (int readfd, int writefd, char *path, char **argv)
+
+Given file descriptors to read from and write to, a path to an executable, and
+an argument vector, fork_and_exec will fork a new process, replace the STDIN
+and STDOUT file descriptors with readfd and writefd (if necessary), and run
+execvp with the given executable and argument vector. It contains all
+appropriate error checking.
+Returns the pid of the created process to the parent.
+------------------------------------------------------------------------------
