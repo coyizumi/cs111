@@ -114,7 +114,7 @@ end of the pipe as the readfd argument and root->next as the command_s.
 Once the parent has created all children, readfd is closed if it is a pipe.
 The parent then waits for the children to complete.
 
-Returns the status given by waitpid().
+Returns the status given by waitpid(), or 0 on a recoverable failure.
 ------------------------------------------------------------------------------
 int parse_args (char **args)
 
