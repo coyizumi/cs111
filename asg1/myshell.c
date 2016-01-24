@@ -133,6 +133,7 @@ int execute_commands (int readfd, command_s *root)
 {
     // May be null if line ends in a ;
     if (root == NULL) return 0;
+
     int pid = 0;
     // No IO redirects
     if (root->following_special == 0)
@@ -286,7 +287,8 @@ int parse_args (char **args)
 int main(int argc, char **argv) 
 {
     exec_name = argv[0];
-    char **args; 
+    char **args;
+    // Repeatedly print a $ then read and execute a line
     printf ("$ ");
     while((args = get_line())) 
     {
