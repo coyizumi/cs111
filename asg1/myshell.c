@@ -121,7 +121,7 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
         // If execvp returns, something horrible has happened
         if (execvp (path, argv))
         {
-            perror (exec_name);
+            perror (path);
             exit (1);
         }
     }
@@ -152,6 +152,12 @@ int execute_commands (int readfd, command_s *root)
         // Open file (create it as user read and writable if it doesn't exist)
         char *filename = root->next->argv[0];
         int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+        // If we can't write to file, print an error and die
+        if (out_fd < 0)
+        {
+        	perror (filename);
+        	exit(1);
+        }
         pid = fork_and_exec (readfd, out_fd, root->argv[0], root->argv);
         close (out_fd);
         // Move root forward to next so we can check for semicolons
@@ -169,6 +175,12 @@ int execute_commands (int readfd, command_s *root)
         // Open file to read
         char *filename = root->next->argv[0];
         int in_fd = open (filename, O_RDONLY);
+        // If we can't open the file, print an error and abort command
+        if (in_fd < 0)
+        {
+        	perror (filename);
+        	return -1;
+        }
         pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
         close (in_fd);
         // Move root forward to next so we can check for semicolons
@@ -186,6 +198,11 @@ int execute_commands (int readfd, command_s *root)
         // Create pipe
         int pipefd[2];
         int status = pipe(pipefd);
+        if (status < 0)
+        {
+        	perror(exec_name);
+        	exit(1);
+        }
         int read_pipe = pipefd[0];
         int write_pipe = pipefd[1];
 
