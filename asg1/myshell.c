@@ -9,6 +9,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+// In many most cases, when a system call fails all we can do is print an 
+// error and die. This macro turns what was once a 4-5 line statement into a 
+// one liner. If the given expression is true, print an error and die.
+#define perror_die_on_true(expr) { \
+    if (expr) {                    \
+        perror (exec_name);        \
+        exit(1);                   \
+    }                              \
+}
+
 extern char **get_line();
 extern int yylex_destroy();
 
@@ -43,11 +53,8 @@ void print_command_s (command_s *cmd)
 command_s *new_command_s (char **argv)
 {
     command_s *new_cmd = malloc (sizeof (*new_cmd));
-    if (new_cmd == NULL)
-    {
-        perror(exec_name);
-        exit(1);
-    }
+    // If malloc fails, perror and die
+    perror_die_on_true (new_cmd == NULL);
     new_cmd->argv = argv;
     new_cmd->following_special = 0;
     new_cmd->next = NULL;
@@ -98,14 +105,10 @@ int check_special (char *str)
 int fork_and_exec (int readfd, int writefd, char *path, char **argv)
 {
     int pid = fork();
-    // If fork failed
-    if (pid < 0)
-    {
-        perror (exec_name);
-        exit (1);
-    }
+    // If fork failed, perror and die
+    perror_die_on_true (pid < 0);
     // If we're child
-    else if (pid == 0)
+    if (pid == 0)
     {
         // If readfd or writefd is other than default, dup it
         if (readfd != STDIN_FILENO)
@@ -119,11 +122,7 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
             dup (writefd);
         }
         // If execvp returns, something horrible has happened
-        if (execvp (path, argv))
-        {
-            perror (path);
-            exit (1);
-        }
+        perror_die_on_true (execvp (path, argv));
     }
     // If we're the parent
     return pid;
@@ -153,11 +152,8 @@ int execute_commands (int readfd, command_s *root)
         char *filename = root->next->argv[0];
         int out_fd = open (filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
         // If we can't write to file, print an error and die
-        if (out_fd < 0)
-        {
-        	perror (filename);
-        	exit(1);
-        }
+        perror_die_on_true (out_fd < 0);
+
         pid = fork_and_exec (readfd, out_fd, root->argv[0], root->argv);
         close (out_fd);
         // Move root forward to next so we can check for semicolons
@@ -185,33 +181,23 @@ int execute_commands (int readfd, command_s *root)
         {
             int pipefd[2];
             int status = pipe(pipefd);
-            if (status < 0)
-            {
-                perror (exec_name);
-                exit(1);
-            }
+            perror_die_on_true (status < 0);
+
             int read_pipe = pipefd[0];
             int write_pipe = pipefd[1];
 
             pid = fork_and_exec(in_fd, write_pipe, root->argv[0], root->argv);
-            if (close (write_pipe))
-            {
-                perror (exec_name);
-                exit(1);
-            }
+            perror_die_on_true (close (write_pipe));
+
             if (readfd != STDIN_FILENO) 
             {
-                if (close (readfd))
-                {
-                    perror (exec_name);
-                    exit(1);
-                }
+                perror_die_on_true (close (readfd));
             }
 
             return execute_commands (read_pipe, root->next->next);
         }
         pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
-        close (in_fd);
+        perror_die_on_true (close (in_fd));
         // Move root forward to next so we can check for semicolons
         root = root->next;
     }
@@ -227,30 +213,20 @@ int execute_commands (int readfd, command_s *root)
         // Create pipe
         int pipefd[2];
         int status = pipe(pipefd);
-        if (status < 0)
-        {
-        	perror(exec_name);
-        	exit(1);
-        }
+        perror_die_on_true (status < 0);
+
         int read_pipe = pipefd[0];
         int write_pipe = pipefd[1];
 
         // Fork first process
         pid = fork_and_exec(readfd, write_pipe, root->argv[0], root->argv);
         // Close write_pipe as parent
-        if (close (write_pipe))
-        {
-            perror (exec_name);
-            exit(1);
-        }
+        perror_die_on_true (close (write_pipe));
+
         // If readfd is from a pipe, close it
         if (readfd != STDIN_FILENO)
         {
-            if (close (readfd))
-            {
-                perror (exec_name);
-                exit(1);
-            }
+            perror_die_on_true (close (readfd));
         }
         // Recursively execute the commands after the pipe, giving the read end of the pipe
         // as the fd to read from
@@ -259,18 +235,14 @@ int execute_commands (int readfd, command_s *root)
     // If we got our input from a pipe, close that input
     if (readfd != STDIN_FILENO)
     {
-        if (close (readfd))
-        {
-            perror (exec_name);
-            exit(1);
-        }
+        perror_die_on_true (close (readfd));
     }
     // If we executed a command, wait for it
     int status = 0;
     if (pid)
     {
         int status = 0;
-        waitpid (pid, &status, 0);
+        perror_die_on_true (waitpid (pid, &status, 0) < 0);
     }
     // If there is a semicolon, execute the command(s) following the semicolon
     if (root->following_special == ';')
