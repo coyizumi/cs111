@@ -20,7 +20,7 @@
 }
 
 extern char **get_line();
-extern int yylex_destroy();
+extern void lex_cleanup();
 
 char *exec_name;
 
@@ -62,7 +62,7 @@ command_s *new_command_s (char **argv)
 }
 
 // Free memory associated with a command_s, including argv
-void free_commands (command_s *root)
+void free_command_s (command_s *root)
 {
     if (root == NULL) return;
     for (int i = 0; root->argv[i]; i++)
@@ -71,7 +71,7 @@ void free_commands (command_s *root)
     }
     command_s *next = root->next;
     free (root);
-    free_commands(next);
+    free_command_s(next);
 }
 
 // Checks for built in commands and performs them
@@ -81,7 +81,7 @@ int check_commands (char **args)
     if (args[0] && strcmp (args[0], "exit") == 0)
     {
         for (int i = 0; args[i]; i++) free (args[i]);
-        yylex_destroy();
+        lex_cleanup();
         exit(0);
     }
     return 0;
@@ -113,13 +113,13 @@ int fork_and_exec (int readfd, int writefd, char *path, char **argv)
         // If readfd or writefd is other than default, dup it
         if (readfd != STDIN_FILENO)
         {
-            close (STDIN_FILENO);
-            dup (readfd);
+            perror_die_on_true (close (STDIN_FILENO));
+            perror_die_on_true (dup (readfd) < 0);
         }
         if (writefd != STDOUT_FILENO)
         {
-            close (STDOUT_FILENO);
-            dup (writefd);
+            perror_die_on_true (close (STDOUT_FILENO));
+            perror_die_on_true (dup (writefd) < 0);
         }
         // If execvp returns, something horrible has happened
         perror_die_on_true (execvp (path, argv));
@@ -156,7 +156,7 @@ int execute_commands (int readfd, command_s *root)
         perror_die_on_true (out_fd < 0);
 
         pid = fork_and_exec (readfd, out_fd, root->argv[0], root->argv);
-        close (out_fd);
+        perror_die_on_true (close (out_fd));
         // Move root forward to next so we can check for semicolons
         root = root->next;
     }
@@ -280,7 +280,7 @@ int parse_args (char **args)
         }
     }
     execute_commands(STDIN_FILENO, root);
-    free_commands(root);
+    free_command_s(root);
     return 0;
 }
 
@@ -296,5 +296,5 @@ int main(int argc, char **argv)
         printf ("$ ");
     }
     // Clean up scanner memory
-    yylex_destroy();
+    lex_cleanup();
 }
