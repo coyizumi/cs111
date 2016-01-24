@@ -1,8 +1,8 @@
 %{
 // Found in the GNU Flex documentation 
 #define YY_DECL char** yylex(void)
-int _numargs = 20;
-char *_args[20];
+int _numargs = 100;
+char *_args[100];
 int _argcount = 0;
 %}
 
