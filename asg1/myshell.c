@@ -167,7 +167,7 @@ int execute_commands (int readfd, command_s *root)
     else if (root->following_special == '<')
     {
         // Check that root->next is valid
-        if (!(root->next) && !(root->next->argv[0]))
+        if (!(root->next) || !(root->next->argv[0]))
         {
             fprintf (stderr, "%s: No input file specified\n", exec_name);
             return 0;
@@ -180,6 +180,35 @@ int execute_commands (int readfd, command_s *root)
         {
         	perror (filename);
         	return -1;
+        }
+        if (root->next->following_special == '|')
+        {
+            int pipefd[2];
+            int status = pipe(pipefd);
+            if (status < 0)
+            {
+                perror (exec_name);
+                exit(1);
+            }
+            int read_pipe = pipefd[0];
+            int write_pipe = pipefd[1];
+
+            pid = fork_and_exec(in_fd, write_pipe, root->argv[0], root->argv);
+            if (close (write_pipe))
+            {
+                perror (exec_name);
+                exit(1);
+            }
+            if (readfd != STDIN_FILENO) 
+            {
+                if (close (readfd))
+                {
+                    perror (exec_name);
+                    exit(1);
+                }
+            }
+
+            return execute_commands (read_pipe, root->next->next);
         }
         pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
         close (in_fd);
@@ -209,7 +238,11 @@ int execute_commands (int readfd, command_s *root)
         // Fork first process
         pid = fork_and_exec(readfd, write_pipe, root->argv[0], root->argv);
         // Close write_pipe as parent
-        close (write_pipe);
+        if (close (write_pipe))
+        {
+            perror (exec_name);
+            exit(1);
+        }
         // If readfd is from a pipe, close it
         if (readfd != STDIN_FILENO)
         {
