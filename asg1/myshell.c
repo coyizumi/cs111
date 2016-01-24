@@ -71,7 +71,7 @@ void free_command_s (command_s *root)
     }
     command_s *next = root->next;
     free (root);
-    free_command_s(next);
+    free_command_s (next);
 }
 
 // Checks for built in commands and performs them
