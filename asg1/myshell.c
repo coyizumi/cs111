@@ -197,7 +197,19 @@ int execute_commands (int readfd, command_s *root)
 
             return execute_commands (read_pipe, root->next->next);
         }
-        pid = fork_and_exec (in_fd, STDOUT_FILENO, root->argv[0], root->argv);
+        int out_fd = STDOUT_FILENO;
+        if (root->next->following_special == '>')
+        {
+            if (!(root->next->next) || (!root->next->next->argv[0]))
+            {
+                fprintf (stderr, "%s: No output file specified\n", exec_name);
+                return 0;
+            }
+            char *out_filename = root->next->next->argv[0];
+            out_fd = open (out_filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+            perror_die_on_true (out_fd < 0);
+        }
+        pid = fork_and_exec (in_fd, out_fd, root->argv[0], root->argv);
         perror_die_on_true (close (in_fd));
         // Move root forward to next so we can check for semicolons
         root = root->next;
