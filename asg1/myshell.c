@@ -211,6 +211,12 @@ int execute_commands (int readfd, command_s *root)
         }
         pid = fork_and_exec (in_fd, out_fd, root->argv[0], root->argv);
         perror_die_on_true (close (in_fd));
+        if (out_fd != STDOUT_FILENO)
+        {
+            perror_die_on_true (close (out_fd));
+            // In this case, we need to move root forward twice to check for semicolons
+            root = root->next;
+        }
         // Move root forward to next so we can check for semicolons
         root = root->next;
     }
