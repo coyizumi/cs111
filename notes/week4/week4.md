@@ -1,5 +1,102 @@
 # Week 4 (Jan 25 - 29)
 
+## Lecture 1 (Jan 25)
+
+### Interprocess Communication and Synchronization
+
+#### Problem: Race Conditions
+* Processes share mem
+* both read/write shared mem
+* Can't guarantee read/write is atomic
+* Can cause eroneous results
+
+#### Critical Regions
+
+* Area of code where only one process can be at a time
+* Provide mutual exclusion to prevent race conditions
+* Four conditions must hold
+	* No two processes may use critical regions at once
+	* No assumptions may be made on CPU speed or #
+	* NO processes outside critical region may block another process
+	* Processes may not wait forever to enter critical region
+
+Strict alternation
+* Keep variable to keep track of whose turn it is
+* Waiting process waits for turn
+* Avoids race condition, but doesn't satisfy criterion
+
+#### Bakers Algorithm
+
+* Each process takes a number.
+	* Two processes may receive same number
+		* If they get number at clsoe to same time
+	* Use process ID as tie breaker
+
+#### Use Hardware
+
+* Prior methods
+	* Complex
+	* Busy wait wastes CPU time
+* Solution: Use hardware
+* Several hardware methods
+	* Test and Set (Atomic)
+	* Atomic Swap
+	* Turn off interrupts
+		* Process not switched out unless it asks (not good for user programs)
+* Semaphores
+	* No busy wait
+* Implementation
+	* Semaphore S accessed by two atomic ops
+		* Down (S) (AKA P)
+			* At start of critical region
+			* Blocks until region open
+		* Up (S) (AKA S)
+			* At end
+			* unblocks those waiting to Down
+
+Rendevous
+* Want to guarantee some operation occurs after another
+* Have process that should come second wait for a signal from first process
+
+Types of Semaphores
+* Counting
+* Binary
+
+#### Monitors
+
+* High Level Synchro Primitive
+	* Multiple entry points
+	* Only one process in monitor at once
+	* Mutual Exclusion
+* Provided by high level lang
+	* Variable belonging to monitor protected
+
+* Prob: How can proc wait inside monitor?
+	* Can't sleep, no one can enter
+	* Sol: Use condition vars
+* Two Ops
+	* Wait: Suspend until signaled
+	* Signal: Wake up processes waiting for signal
+
+Locks and COndition vars
+* Provide monitors using special data types
+	* Locks (Acquire, release)
+	* Conditional (wait signal)
+* Lock usage
+	* Get lock - enter monitor
+	* Lock can be made with semaphores
+
+Message Passing
+* Sync by sending messages
+* Two primitives
+	* Send
+	* Recv
+* ACK - how to know recv got message
+* Prob: Authentication - how do you know message is from correct process?
+
+Barriers - Hold processes until all reach the barrier
+
+
 ## Lecture 2 (Jan 27)
 
 Livelock Example:
