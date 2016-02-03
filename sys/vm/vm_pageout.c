@@ -926,6 +926,11 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int maxlaunder;
 	int lockmode;
 	boolean_t queues_locked;
+	
+	//system log stat counters
+	int free_count;
+	int cache_count;
+	
 
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
@@ -1123,6 +1128,11 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 			 * Invalid pages can be easily freed
 			 */
 			vm_page_free(m);
+			
+			//keep track of how many pages to be freed
+			free_count++;
+			
+			
 			PCPU_INC(cnt.v_dfree);
 			--page_shortage;
 		} else if (m->dirty == 0) {
@@ -1131,6 +1141,10 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 			 * This effectively frees them.
 			 */
 			vm_page_cache(m);
+			
+			//keep track of how many pages added to cache list
+			cache_count++;
+			
 			--page_shortage;
 		} else if ((m->flags & PG_WINATCFLS) == 0 && pass < 2) {
 			/*
@@ -1713,7 +1727,7 @@ vm_pageout_init(void)
 	 * case paging behaviors with stale active LRU.
 	 */
 	if (vm_pageout_update_period == 0)
-		vm_pageout_update_period = 600;
+		vm_pageout_update_period = 10;
 
 	/* XXX does not really belong here */
 	if (vm_page_max_wired == 0)
