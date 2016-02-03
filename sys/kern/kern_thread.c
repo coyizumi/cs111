@@ -215,6 +215,7 @@ thread_init(void *mem, int size, int flags)
 	umtx_thread_init(td);
 	td->td_kstack = 0;
 	td->td_sel = NULL;
+	td->td_tickets = 500;
 	return (0);
 }
 
