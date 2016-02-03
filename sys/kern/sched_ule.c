@@ -401,7 +401,6 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 struct thread *lottoq_choose(struct lottoq *q)
 {
 	if (TAILQ_EMPTY(&(q->head))) return NULL;
-	if (q->T <= 0) q->T = 1;
 	int num = random() % q->T;
 	int ticket_tally = 0;
 	struct thread *current;
@@ -2079,25 +2078,24 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 void
 sched_nice(struct proc *p, int nice)
 {
+	struct thread *td;
+	PROC_LOCK_ASSERT(p, MA_OWNED);
 	
-	//#define is_root(td) (!((td)->td_ucred->cr_uid))
 	/* TODO - If non-root, don't set p_nice */
 	if(P_IS_ROOT(p){
-		
+		p->p_nice = nice;
 	}
-	struct thread *td;
-
-	PROC_LOCK_ASSERT(p, MA_OWNED);
-
-	p->p_nice = nice;
+	
 	FOREACH_THREAD_IN_PROC(p, td) {
 		/* TODO - If non-root, set td->td_base_tickets of each thread */
-		if(TD_IS_ROOT(td)){
-			
-		}
+		
 		thread_lock(td);
-		sched_priority(td);
-		sched_prio(td, td->td_base_user_pri);
+		if(TD_IS_ROOT(td)){
+			sched_priority(td);
+			sched_prio(td, td->td_base_user_pri);
+		}else{
+			td->td_base_tickets = 0  //what does this equal?
+		}
 		thread_unlock(td);
 	}
 }
