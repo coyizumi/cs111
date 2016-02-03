@@ -928,10 +928,10 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	boolean_t queues_locked;
 	
 	//system log stat counters
-	int free_count;
-	int cache_count;
+	int log_free_count = 0;
+	int log_cache_count = 0;
 	
-
+ 
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
@@ -1130,7 +1130,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 			vm_page_free(m);
 			
 			//keep track of how many pages to be freed
-			free_count++;
+			log_free_count++;
 			
 			
 			PCPU_INC(cnt.v_dfree);
@@ -1143,7 +1143,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 			vm_page_cache(m);
 			
 			//keep track of how many pages added to cache list
-			cache_count++;
+			log_cache_count++;
 			
 			--page_shortage;
 		} else if ((m->flags & PG_WINATCFLS) == 0 && pass < 2) {
