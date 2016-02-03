@@ -377,7 +377,8 @@ SDT_PROBE_DEFINE2(sched, , , surrender, "struct thread *",
 
 
 // Macro for checking if thread owner is superuser
-#define is_root(td) (!((td)->td_ucred->cr_uid))
+#define TD_IS_ROOT(td) (!((td)->td_ucred->cr_uid))
+#define P_IS_ROOT(p) (!((p)->p_ucred->cr_uid))
 
 static void lottoq_init(struct lottoq *q)
 {
@@ -2077,7 +2078,12 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 void
 sched_nice(struct proc *p, int nice)
 {
+	
+	//#define is_root(td) (!((td)->td_ucred->cr_uid))
 	/* TODO - If non-root, don't set p_nice */
+	if(P_IS_ROOT(p){
+		
+	}
 	struct thread *td;
 
 	PROC_LOCK_ASSERT(p, MA_OWNED);
@@ -2085,6 +2091,9 @@ sched_nice(struct proc *p, int nice)
 	p->p_nice = nice;
 	FOREACH_THREAD_IN_PROC(p, td) {
 		/* TODO - If non-root, set td->td_base_tickets of each thread */
+		if(TD_IS_ROOT(td)){
+			
+		}
 		thread_lock(td);
 		sched_priority(td);
 		sched_prio(td, td->td_base_user_pri);
