@@ -348,6 +348,7 @@ static int sysctl_kern_sched_topology_spec_internal(struct sbuf *sb,
 static void lottoq_init(struct lottoq *q);
 static void lottoq_add(struct lottoq *q, struct thread *td);
 static void lottoq_remove (struct lottoq *q, struct thread *td);
+struct thread *lottoq_choose(struct lottoq *q);
 
 static void sched_setup(void *dummy);
 SYSINIT(sched_setup, SI_SUB_RUN_QUEUE, SI_ORDER_FIRST, sched_setup, NULL);
