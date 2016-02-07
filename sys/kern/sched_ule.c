@@ -344,6 +344,10 @@ static int sysctl_kern_sched_topology_spec_internal(struct sbuf *sb,
     struct cpu_group *cg, int indent);
 #endif
 
+static __inline void lottoq_init(struct lottoq *q);
+static __inline void lottoq_add(struct lottoq *q, struct thread *td);
+static __inline void lottoq_remove (struct lottoq *q, struct thread *td);
+
 static void sched_setup(void *dummy);
 SYSINIT(sched_setup, SI_SUB_RUN_QUEUE, SI_ORDER_FIRST, sched_setup, NULL);
 
@@ -373,18 +377,18 @@ SDT_PROBE_DEFINE2(sched, , , surrender, "struct thread *",
 // Macro for checking if thread owner is superuser
 #define is_root(td) (!((td)->td_ucred->cr_uid))
 
-lottoq_init(struct lottoq *q)
+static __inline void lottoq_init(struct lottoq *q)
 {
 	q->T = 0;
 	TAILQ_INIT(&(q->head));
 }
 
-lottoq_add(struct lottoq *q, thread *td)
+static __inline void lottoq_add(struct lottoq *q, struct thread *td)
 {
 	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
 }
 
-lottoq_remove (struct lottoq *q, thread *td)
+static __inline void lottoq_remove (struct lottoq *q, struct thread *td)
 {
 	TAILQ_REMOVE(&(q->head), td, td_lottoq);
 }
