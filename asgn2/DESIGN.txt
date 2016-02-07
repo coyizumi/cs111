@@ -88,6 +88,48 @@ This function is used to add a thread to a tdq. We have added code to
 add this thread to a lottoq if it is not owned by root.
 
 This is accomplished using a combination of the TD_IS_ROOT macro to
-check for rootness, and the lottoq_add function to add the thread to
+check for rootness, and the lottoq_add() function to add the thread to
 a lottoq.
+----------------------------------------------------------------------
+# static __inline void
+# tdq_runq_rem(struct tdq *tdq, struct thread *td)
+
+This function is used to remove a thread from a tdq. We have added
+code to remove the thread from a lottoq instead if it is not owned by
+root.
+
+This is accomplished using a combination of TD_IS_ROOT and the
+lottoq_remove() function.
+----------------------------------------------------------------------
+# static struct thread *
+# lottoq_steal(struct lottoq *q, int cpu)
+
+This function applies the logic of runq_steal to a Lottery Queue.
+
+It finds and returns the first thread in the given lottery queue that
+can be migrated and scheduled on the new CPU.
+----------------------------------------------------------------------
+# static struct thread *
+# tdq_steal(struct tdq *tdq, int cpu)
+
+This function is used to steal a thread from a thread queue. We have
+added code to steal a thread from a Lottery Queue if there are no
+stealable threads in the realtime and interactive runqs.
+
+This is accomplished by using lottoq_steal().
+----------------------------------------------------------------------
+# static struct thread *
+# tdq_choose(struct tdq *tdq)
+
+This function is used to choose a task from the tdq. We have added
+code to choose a task from a lottoq if there are no tasks available on
+the built-in runqs.
+
+This is accomplished by using lottoq_choose().
+----------------------------------------------------------------------
+# static void
+# tdq_setup(struct tdq *tdq)
+
+This function is used to initialize a tdq. We have added code to
+initialize the three lottoqs that we added to tdq.
 ----------------------------------------------------------------------
