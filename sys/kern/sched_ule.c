@@ -374,6 +374,8 @@ SDT_PROBE_DEFINE(sched, , , on__cpu);
 SDT_PROBE_DEFINE(sched, , , remain__cpu);
 SDT_PROBE_DEFINE2(sched, , , surrender, "struct thread *", 
     "struct proc *");
+SDT_PROBE_DEFINE3(sched, , , lotto_enq, "struct lottoq *", "struct thread *", "int");
+SDT_PROBE_DEFINE3(sched, , , lotto_deq, "struct lottoq *", "struct thread *", "int");
 
 
 // Macro for checking if thread owner is superuser
@@ -388,15 +390,21 @@ static void lottoq_init(struct lottoq *q)
 
 static void lottoq_add(struct lottoq *q, struct thread *td)
 {
-	td->td_tickets = (td->td_tickets) ? td->td_tickets : 500;
+	if (td->tickets <= 0)
+	{
+		td->td_tickets = 500;
+		td->td_base_tickets = 500;
+	}
 	q->T += td->td_tickets;
 	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
+	SDT_PROBE3(sched, , , lotto_enq, q, td, td->td_tickets);
 }
 
 static void lottoq_remove (struct lottoq *q, struct thread *td)
 {
 	q->T -= td->td_tickets;
 	TAILQ_REMOVE(&(q->head), td, td_lottoq);
+	SDT_PROBE3(sched, , , lotto_deq, q, td, td->td_tickets);
 }
 
 struct thread *lottoq_choose(struct lottoq *q)
