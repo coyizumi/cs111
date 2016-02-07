@@ -533,7 +533,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 			}
 			else
 			{
-				ts-ts_lottoq = &tdq->tdq_timeshare_lotto;
+				ts->ts_lottoq = &tdq->tdq_timeshare_lotto;
 			}
 			lottoq_add (ts->ts_lottoq, td);
 			return;
