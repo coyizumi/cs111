@@ -410,6 +410,7 @@ struct thread *lottoq_choose(struct lottoq *q)
 			return current;
 		}
 	}
+	return NULL;
 }
 
 /*
