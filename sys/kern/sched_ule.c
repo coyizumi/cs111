@@ -220,6 +220,14 @@ static int static_boost = PRI_MIN_BATCH;
 static int sched_idlespins = 10000;
 static int sched_idlespinthresh = -1;
 
+TAILQ_HEAD (lotto, thread);
+
+struct lottoq {
+	struct lotto head;
+	int T;
+	// Rand Numbers here maybe
+};
+
 /*
  * tdq - per processor runqs and statistics.  All fields are protected by the
  * tdq_lock.  The load and lowpri may be accessed without to avoid excess
@@ -246,11 +254,16 @@ struct tdq {
 	struct runq	tdq_realtime;		/* real-time run queue. */
 	struct runq	tdq_timeshare;		/* timeshare run queue. */
 	struct runq	tdq_idle;		/* Queue of IDLE threads. */
+	struct lottoq tdq_timeshare_lotto;
+	struct lottoq tdq_interactive_lotto;
+	struct lottoq tdq_idle_lotto;
 	char		tdq_name[TDQ_NAME_LEN];
 #ifdef KTR
 	char		tdq_loadname[TDQ_LOADNAME_LEN];
 #endif
 } __aligned(64);
+
+
 
 /* Idle thread states and config. */
 #define	TDQ_RUNNING	1
@@ -355,6 +368,26 @@ SDT_PROBE_DEFINE(sched, , , on__cpu);
 SDT_PROBE_DEFINE(sched, , , remain__cpu);
 SDT_PROBE_DEFINE2(sched, , , surrender, "struct thread *", 
     "struct proc *");
+
+
+// Macro for checking if thread owner is superuser
+#define is_root(td) (!((td)->td_ucred->cr_uid))
+
+lottoq_init(struct lottoq *q)
+{
+	q->T = 0;
+	TAILQ_INIT(&(q->head));
+}
+
+lottoq_add(struct lottoq *q, thread *td)
+{
+	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
+}
+
+lottoq_remove (struct lottoq *q, thread *td)
+{
+	TAILQ_REMOVE(&(q->head), td, td_lottoq);
+}
 
 /*
  * Print the threads waiting on a run-queue.
