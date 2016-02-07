@@ -388,6 +388,7 @@ static void lottoq_init(struct lottoq *q)
 
 static void lottoq_add(struct lottoq *q, struct thread *td)
 {
+	td->td_tickets = (td->td_tickets) ? td->td_tickets : 500;
 	q->T += td->td_tickets;
 	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
 }
@@ -400,7 +401,12 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 
 struct thread *lottoq_choose(struct lottoq *q)
 {
+<<<<<<< HEAD
 	if (TAILQ_EMPTY(&(q->head))) return NULL;
+=======
+	if (TAILQ_EMPTY(&(q->head)) || q->T <= 0) return NULL;
+	if (q->T <= 0) q->T = 1;
+>>>>>>> 0f903a92c94a302e2f534b8d45a9edb8c8720004
 	int num = random() % q->T;
 	int ticket_tally = 0;
 	struct thread *current;
@@ -545,7 +551,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 			if (tdq->tdq_ridx != tdq->tdq_idx &&
 			    pri == tdq->tdq_ridx)
 				pri = (unsigned char)(pri - 1) % RQ_NQS;
-			if (! is_root(td))
+			if (! TD_IS_ROOT(td))
 			{
 				if (pri <= PRI_MAX_INTERACT)
 				{
@@ -564,7 +570,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 		return;
 	} else
 		ts->ts_runq = &tdq->tdq_idle;
-	if (! is_root(td))
+	if (! TD_IS_ROOT(td))
 	{
 		ts->ts_lottoq = &tdq->tdq_idle_lotto;
 		lottoq_add(ts->ts_lottoq, td);
@@ -592,7 +598,7 @@ tdq_runq_rem(struct tdq *tdq, struct thread *td)
 		ts->ts_flags &= ~TSF_XFERABLE;
 	}
 	/* If thread isn't root, remove it from ts->ts_lottoq instead */
-	if (! is_root (td))
+	if (! TD_IS_ROOT (td))
 	{
 		lottoq_remove (ts->ts_lottoq, td);
 		return;
