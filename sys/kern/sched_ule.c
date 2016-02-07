@@ -401,9 +401,7 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 
 struct thread *lottoq_choose(struct lottoq *q)
 {
-	if (TAILQ_EMPTY(&(q->head))) return NULL;
 	if (TAILQ_EMPTY(&(q->head)) || q->T <= 0) return NULL;
-	if (q->T <= 0) q->T = 1;
 	int num = random() % q->T;
 	int ticket_tally = 0;
 	struct thread *current;
@@ -2097,7 +2095,7 @@ sched_nice(struct proc *p, int nice)
 			sched_priority(td);
 			sched_prio(td, td->td_base_user_pri);
 		}else{
-			td->td_base_tickets = 0  //what does this equal?
+			td->td_base_tickets = nice;  //what does this equal?
 		}
 		thread_unlock(td);
 	}
