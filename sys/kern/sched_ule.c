@@ -390,7 +390,7 @@ static void lottoq_init(struct lottoq *q)
 
 static void lottoq_add(struct lottoq *q, struct thread *td)
 {
-	if (td->tickets <= 0)
+	if (td->td_tickets <= 0)
 	{
 		td->td_tickets = 500;
 		td->td_base_tickets = 500;
