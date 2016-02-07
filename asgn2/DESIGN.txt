@@ -1,0 +1,135 @@
+----------------------------------------------------------------------
+
+# Data Structures
+
+----------------------------------------------------------------------
+
+# Lottery Queue (lottoq)
+
+The lottoq takes advantage of the TAILQ macros found in sys/queue.h.
+It holds a TAILQ of threads and keeps track of the total ticket count
+of threads it holds.
+
+Lottery Queue Functions
+----------------------------------------------------------------------
+# static void lottoq_init(struct lottoq *q)
+
+Initializes the internal TAILQ and sets the total tickets to 0.
+----------------------------------------------------------------------
+# static void lottoq_add(struct lottoq *q, struct thread *td)
+
+Adds the thread td to lottoq q. Updates the ticket count.
+----------------------------------------------------------------------
+# static void lottoq_remove (struct lottoq *q, struct thread *td)
+
+Removes the thread td from lottoq q. Updates the ticket count.
+----------------------------------------------------------------------
+# struct thread *lottoq_choose(struct lottoq *q)
+
+Performs a lottery selection. Pulls a ticket and finds the thread with
+the pulled ticket.
+
+Returns the chosen thread.
+----------------------------------------------------------------------
+
+# Thread
+
+To accomadate the new Lottery Queue, the thread struct was modified
+slightly. It now has three additional fields:
+
+1. TAILQ_ENTRY(thread) td_lottoq
+	Used to create the internal TAILQ of the Lottery Queue.
+
+2. int td_tickets;
+	The tickets the thread owns. Used to select a winner in
+	lottoq_choose().
+
+3. int td_base_tickets;
+	Currently unused.
+
+----------------------------------------------------------------------
+
+# tdq
+
+To accomodate the new Lottery Queue, the tdq struct in sched_ule was
+modified to include three lottoqs. One each for interactive, timeshare
+and idle processes.
+
+----------------------------------------------------------------------
+
+td_sched
+
+To accomodate the new Lottery Queue, the td_sched struct in sched_ule
+was modified to keep track of the most recently used lottoq.
+
+----------------------------------------------------------------------
+
+# Utility Macros
+
+----------------------------------------------------------------------
+# TD_IS_ROOT(td)
+
+If the given thread has an effective user ID of 0, this evaluates to
+true. Else it is false.
+----------------------------------------------------------------------
+# P_IS_ROOT(p)
+
+If the given process has an effective user ID of 0, this evaluates to
+true. Else it is false.
+----------------------------------------------------------------------
+
+# Core Functions
+
+----------------------------------------------------------------------
+# static __inline void
+# tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
+
+This function is used to add a thread to a tdq. We have added code to
+add this thread to a lottoq if it is not owned by root.
+
+This is accomplished using a combination of the TD_IS_ROOT macro to
+check for rootness, and the lottoq_add() function to add the thread to
+a lottoq.
+----------------------------------------------------------------------
+# static __inline void
+# tdq_runq_rem(struct tdq *tdq, struct thread *td)
+
+This function is used to remove a thread from a tdq. We have added
+code to remove the thread from a lottoq instead if it is not owned by
+root.
+
+This is accomplished using a combination of TD_IS_ROOT and the
+lottoq_remove() function.
+----------------------------------------------------------------------
+# static struct thread *
+# lottoq_steal(struct lottoq *q, int cpu)
+
+This function applies the logic of runq_steal to a Lottery Queue.
+
+It finds and returns the first thread in the given lottery queue that
+can be migrated and scheduled on the new CPU.
+----------------------------------------------------------------------
+# static struct thread *
+# tdq_steal(struct tdq *tdq, int cpu)
+
+This function is used to steal a thread from a thread queue. We have
+added code to steal a thread from a Lottery Queue if there are no
+stealable threads in the realtime and interactive runqs.
+
+This is accomplished by using lottoq_steal().
+----------------------------------------------------------------------
+# static struct thread *
+# tdq_choose(struct tdq *tdq)
+
+This function is used to choose a task from the tdq. We have added
+code to choose a task from a lottoq if there are no tasks available on
+the built-in runqs.
+
+This is accomplished by using lottoq_choose().
+----------------------------------------------------------------------
+# static void
+# tdq_setup(struct tdq *tdq)
+
+This function is used to initialize a tdq. We have added code to
+initialize the three lottoqs that we added to tdq.
+----------------------------------------------------------------------
