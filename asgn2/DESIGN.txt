@@ -1,0 +1,93 @@
+----------------------------------------------------------------------
+
+# Data Structures
+
+----------------------------------------------------------------------
+
+# Lottery Queue (lottoq)
+
+The lottoq takes advantage of the TAILQ macros found in sys/queue.h.
+It holds a TAILQ of threads and keeps track of the total ticket count
+of threads it holds.
+
+Lottery Queue Functions
+----------------------------------------------------------------------
+# static void lottoq_init(struct lottoq *q)
+
+Initializes the internal TAILQ and sets the total tickets to 0.
+----------------------------------------------------------------------
+# static void lottoq_add(struct lottoq *q, struct thread *td)
+
+Adds the thread td to lottoq q. Updates the ticket count.
+----------------------------------------------------------------------
+# static void lottoq_remove (struct lottoq *q, struct thread *td)
+
+Removes the thread td from lottoq q. Updates the ticket count.
+----------------------------------------------------------------------
+# struct thread *lottoq_choose(struct lottoq *q)
+
+Performs a lottery selection. Pulls a ticket and finds the thread with
+the pulled ticket.
+
+Returns the chosen thread.
+----------------------------------------------------------------------
+
+# Thread
+
+To accomadate the new Lottery Queue, the thread struct was modified
+slightly. It now has three additional fields:
+
+1. TAILQ_ENTRY(thread) td_lottoq
+	Used to create the internal TAILQ of the Lottery Queue.
+
+2. int td_tickets;
+	The tickets the thread owns. Used to select a winner in
+	lottoq_choose().
+
+3. int td_base_tickets;
+	Currently unused.
+
+----------------------------------------------------------------------
+
+# tdq
+
+To accomodate the new Lottery Queue, the tdq struct in sched_ule was
+modified to include three lottoqs. One each for interactive, timeshare
+and idle processes.
+
+----------------------------------------------------------------------
+
+td_sched
+
+To accomodate the new Lottery Queue, the td_sched struct in sched_ule
+was modified to keep track of the most recently used lottoq.
+
+----------------------------------------------------------------------
+
+# Utility Macros
+
+----------------------------------------------------------------------
+# TD_IS_ROOT(td)
+
+If the given thread has an effective user ID of 0, this evaluates to
+true. Else it is false.
+----------------------------------------------------------------------
+# P_IS_ROOT(p)
+
+If the given process has an effective user ID of 0, this evaluates to
+true. Else it is false.
+----------------------------------------------------------------------
+
+# Core Functions
+
+----------------------------------------------------------------------
+# static __inline void
+# tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
+
+This function is used to add a thread to a tdq. We have added code to
+add this thread to a lottoq if it is not owned by root.
+
+This is accomplished using a combination of the TD_IS_ROOT macro to
+check for rootness, and the lottoq_add function to add the thread to
+a lottoq.
+----------------------------------------------------------------------
