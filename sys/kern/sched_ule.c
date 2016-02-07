@@ -546,7 +546,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 			if (tdq->tdq_ridx != tdq->tdq_idx &&
 			    pri == tdq->tdq_ridx)
 				pri = (unsigned char)(pri - 1) % RQ_NQS;
-			if (! is_root(td))
+			if (! TD_IS_ROOT(td))
 			{
 				if (pri <= PRI_MAX_INTERACT)
 				{
@@ -565,7 +565,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 		return;
 	} else
 		ts->ts_runq = &tdq->tdq_idle;
-	if (! is_root(td))
+	if (! TD_IS_ROOT(td))
 	{
 		ts->ts_lottoq = &tdq->tdq_idle_lotto;
 		lottoq_add(ts->ts_lottoq, td);
