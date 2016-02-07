@@ -138,6 +138,8 @@ thread_ctor(void *mem, int size, void *arg, int flags)
 	td->td_state = TDS_INACTIVE;
 	td->td_oncpu = NOCPU;
 
+	td->td_tickets = 500;
+
 	td->td_tid = tid_alloc();
 
 	/*
