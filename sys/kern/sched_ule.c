@@ -2085,7 +2085,7 @@ sched_nice(struct proc *p, int nice)
 	PROC_LOCK_ASSERT(p, MA_OWNED);
 	
 	/* TODO - If non-root, don't set p_nice */
-	if(P_IS_ROOT(p){
+	if(P_IS_ROOT(p)){
 		p->p_nice = nice;
 	}
 	
