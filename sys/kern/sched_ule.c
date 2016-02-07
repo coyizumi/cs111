@@ -388,6 +388,7 @@ static void lottoq_init(struct lottoq *q)
 
 static void lottoq_add(struct lottoq *q, struct thread *td)
 {
+	td->td_tickets = (td->td_tickets) ? td->td_tickets : 500;
 	q->T += td->td_tickets;
 	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
 }
