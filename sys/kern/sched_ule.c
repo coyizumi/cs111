@@ -594,7 +594,7 @@ tdq_runq_rem(struct tdq *tdq, struct thread *td)
 
 	ts = td->td_sched;
 	TDQ_LOCK_ASSERT(tdq, MA_OWNED);
-	KASSERT(ts->ts_runq != NULL,
+	KASSERT(ts->ts_runq != NULL || ts->ts_lottoq != NULL,
 	    ("tdq_runq_remove: thread %p null ts_runq", td));
 	if (ts->ts_flags & TSF_XFERABLE) {
 		tdq->tdq_transferable--;
