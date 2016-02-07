@@ -526,19 +526,6 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	if (pri < PRI_MIN_BATCH) {
 		ts->ts_runq = &tdq->tdq_realtime;
 	} else if (pri <= PRI_MAX_BATCH) {
-		if (! is_root(td))
-		{
-			if (pri <= PRI_MAX_INTERACT)
-			{
-				ts->ts_lottoq = &tdq->tdq_interactive_lotto;
-			}
-			else
-			{
-				ts->ts_lottoq = &tdq->tdq_timeshare_lotto;
-			}
-			lottoq_add (ts->ts_lottoq, td);
-			return;
-		}
 		ts->ts_runq = &tdq->tdq_timeshare;
 		KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
 			("Invalid priority %d on timeshare runq", pri));
@@ -557,6 +544,19 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 			if (tdq->tdq_ridx != tdq->tdq_idx &&
 			    pri == tdq->tdq_ridx)
 				pri = (unsigned char)(pri - 1) % RQ_NQS;
+			if (! is_root(td))
+			{
+				if (pri <= PRI_MAX_INTERACT)
+				{
+					ts->ts_lottoq = &tdq->tdq_interactive_lotto;
+				}
+				else
+				{
+					ts->ts_lottoq = &tdq->tdq_timeshare_lotto;
+				}
+				lottoq_add (ts->ts_lottoq, td);
+				return;
+			}
 		} else
 			pri = tdq->tdq_ridx;
 		runq_add_pri(ts->ts_runq, td, pri, flags);
@@ -1218,6 +1218,18 @@ runq_steal(struct runq *rq, int cpu)
 	return (NULL);
 }
 
+static struct thread *
+lottoq_steal(struct lottoq *q, int cpu)
+{
+	struct thread *td;
+	TAILQ_FOREACH(td, &(q->head), td_lottoq) {
+		if (THREAD_CAN_MIGRATE(td) &&
+		    THREAD_CAN_SCHED(td, cpu))
+			return (td);
+	}
+	return NULL;
+}
+
 /*
  * Attempt to steal a thread in priority order from a thread queue.
  */
@@ -1226,16 +1238,14 @@ tdq_steal(struct tdq *tdq, int cpu)
 {
 	struct thread *td;
 
-	/* TODO - Look at runq_steal above. Implement similar functionality
-			  for lottoqs. */
-
 	TDQ_LOCK_ASSERT(tdq, MA_OWNED);
 	if ((td = runq_steal(&tdq->tdq_realtime, cpu)) != NULL)
 		return (td);
 	if ((td = runq_steal_from(&tdq->tdq_timeshare,
 	    cpu, tdq->tdq_ridx)) != NULL)
 		return (td);
-	/* Try to steal from 2 interactive lottoqs here */
+	if ((td = lottoq_steal(&tdq->tdq_interactive_lotto,cpu)) != NULL) return (td);
+	if ((td = lottoq_steal(&tdq->tdq_timeshare_lotto,cpu)) != NULL) return (td);
 	return (runq_steal(&tdq->tdq_idle, cpu));
 }
 
