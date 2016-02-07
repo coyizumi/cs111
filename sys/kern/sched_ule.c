@@ -401,12 +401,9 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 
 struct thread *lottoq_choose(struct lottoq *q)
 {
-<<<<<<< HEAD
 	if (TAILQ_EMPTY(&(q->head))) return NULL;
-=======
 	if (TAILQ_EMPTY(&(q->head)) || q->T <= 0) return NULL;
 	if (q->T <= 0) q->T = 1;
->>>>>>> 0f903a92c94a302e2f534b8d45a9edb8c8720004
 	int num = random() % q->T;
 	int ticket_tally = 0;
 	struct thread *current;
