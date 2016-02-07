@@ -402,6 +402,7 @@ struct thread *lottoq_choose(struct lottoq *q)
 	if (TAILQ_EMPTY(&(q->head))) return NULL;
 	int num = random() % q->T;
 	int ticket_tally = 0;
+	struct thread *current;
 	
 	TAILQ_FOREACH(current, &(q->head), td_lottoq){
 		ticket_tally += current->td_tickets;
