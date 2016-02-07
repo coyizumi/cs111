@@ -287,7 +287,8 @@ struct thread {
 	u_char		td_pri_class;	/* (t) Scheduling class. */
 	u_char		td_user_pri;	/* (t) User pri from estcpu and nice. */
 	u_char		td_base_user_pri; /* (t) Base user pri */
-	int 		tickets; /* tickets for lottery sched */
+	int 		td_base_tickets;
+	int 		td_tickets; /* tickets for lottery sched */
 #define	td_endcopy td_pcb
 
 /*

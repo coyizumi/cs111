@@ -24,7 +24,7 @@ struct thread *lottoq_choose(struct lottoq *q)
 	int ticket_tally;
 	
 	TAILQ_FOREACH(current, &(q->head), td_lottoq){
-		ticket_tally += current->tickets;
+		ticket_tally += current->td_tickets;
 		if(ticket_tally >= num){
 			return current;
 		}

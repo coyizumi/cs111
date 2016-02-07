@@ -89,6 +89,7 @@ dtrace_vtime_switch_func_t	dtrace_vtime_switch_func;
  */
 struct td_sched {	
 	struct runq	*ts_runq;	/* Run-queue we're queued on. */
+	struct lottoq *ts_lottoq; /* Lotto-queue we're queued on. */
 	short		ts_flags;	/* TSF_* flags. */
 	u_char		ts_cpu;		/* CPU that we have affinity for. */
 	int		ts_rltick;	/* Real last tick, for affinity. */
@@ -393,6 +394,19 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 	TAILQ_REMOVE(&(q->head), td, td_lottoq);
 }
 
+struct thread *lottoq_choose(struct lottoq *q)
+{
+	int num = random() % q->T;
+	int ticket_tally;
+	
+	TAILQ_FOREACH(current, &(q->head), td_lottoq){
+		ticket_tally += current->td_tickets;
+		if(ticket_tally >= num){
+			return current;
+		}
+	}
+}
+
 /*
  * Print the threads waiting on a run-queue.
  */
@@ -506,6 +520,8 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	if (pri < PRI_MIN_BATCH) {
 		ts->ts_runq = &tdq->tdq_realtime;
 	} else if (pri <= PRI_MAX_BATCH) {
+		/* Todo - set ts->ts_lottoq to appropriate lottoq before 
+                  adding thread to lottoq (this may be used in other functions) */
 		ts->ts_runq = &tdq->tdq_timeshare;
 		KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
 			("Invalid priority %d on timeshare runq", pri));
@@ -526,9 +542,14 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 				pri = (unsigned char)(pri - 1) % RQ_NQS;
 		} else
 			pri = tdq->tdq_ridx;
+		/* TODO - Check if thread is root, if it isnt' determine if it's
+		          interactive or timeshare, then add thread to appropriate
+		          lottoq and return. */
 		runq_add_pri(ts->ts_runq, td, pri, flags);
 		return;
 	} else
+	/* TODO - Check if thread is root, if it isn't, add thread to
+	          idle lottoq instead */
 		ts->ts_runq = &tdq->tdq_idle;
 	runq_add(ts->ts_runq, td, flags);
 }
@@ -551,6 +572,7 @@ tdq_runq_rem(struct tdq *tdq, struct thread *td)
 		tdq->tdq_transferable--;
 		ts->ts_flags &= ~TSF_XFERABLE;
 	}
+	/* If thread isn't root, remove it from ts->ts_lottoq instead */
 	if (ts->ts_runq == &tdq->tdq_timeshare) {
 		if (tdq->tdq_idx != tdq->tdq_ridx)
 			runq_remove_idx(ts->ts_runq, td, &tdq->tdq_ridx);
@@ -1181,12 +1203,16 @@ tdq_steal(struct tdq *tdq, int cpu)
 {
 	struct thread *td;
 
+	/* TODO - Look at runq_steal above. Implement similar functionality
+			  for lottoqs. */
+
 	TDQ_LOCK_ASSERT(tdq, MA_OWNED);
 	if ((td = runq_steal(&tdq->tdq_realtime, cpu)) != NULL)
 		return (td);
 	if ((td = runq_steal_from(&tdq->tdq_timeshare,
 	    cpu, tdq->tdq_ridx)) != NULL)
 		return (td);
+	/* Try to steal from 2 interactive lottoqs here */
 	return (runq_steal(&tdq->tdq_idle, cpu));
 }
 
@@ -1355,6 +1381,7 @@ tdq_choose(struct tdq *tdq)
 		    td->td_priority));
 		return (td);
 	}
+	/* TODO - lottoq choose for interactive, then timeshare here */
 	td = runq_choose(&tdq->tdq_idle);
 	if (td != NULL) {
 		KASSERT(td->td_priority >= PRI_MIN_IDLE,
@@ -1362,6 +1389,7 @@ tdq_choose(struct tdq *tdq)
 		    td->td_priority));
 		return (td);
 	}
+	/* TODO - lottoq choose for idle here */
 
 	return (NULL);
 }
@@ -1378,6 +1406,7 @@ tdq_setup(struct tdq *tdq)
 	runq_init(&tdq->tdq_realtime);
 	runq_init(&tdq->tdq_timeshare);
 	runq_init(&tdq->tdq_idle);
+	/* Initialize three lottoqs here */
 	snprintf(tdq->tdq_name, sizeof(tdq->tdq_name),
 	    "sched lock %d", (int)TDQ_ID(tdq));
 	mtx_init(&tdq->tdq_lock, tdq->tdq_name, "sched lock",
@@ -1482,6 +1511,7 @@ sched_initticks(void *dummy)
 static int
 sched_interact_score(struct thread *td)
 {
+	/* TODO - figure out how this stuff works and determine if we should use it */
 	struct td_sched *ts;
 	int div;
 
@@ -1522,6 +1552,7 @@ sched_interact_score(struct thread *td)
 static void
 sched_priority(struct thread *td)
 {
+	/* TODO - Figure out what this does. Likely we'll be adding/removing tickets here */
 	int score;
 	int pri;
 
@@ -2007,12 +2038,14 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 void
 sched_nice(struct proc *p, int nice)
 {
+	/* TODO - If non-root, don't set p_nice */
 	struct thread *td;
 
 	PROC_LOCK_ASSERT(p, MA_OWNED);
 
 	p->p_nice = nice;
 	FOREACH_THREAD_IN_PROC(p, td) {
+		/* TODO - If non-root, set td->td_base_tickets of each thread */
 		thread_lock(td);
 		sched_priority(td);
 		sched_prio(td, td->td_base_user_pri);
