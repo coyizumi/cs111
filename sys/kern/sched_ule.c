@@ -399,7 +399,7 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 
 struct thread *lottoq_choose(struct lottoq *q)
 {
-	if (TAILQ_EMPTY(&(q->head))) return NULL;
+	if (TAILQ_EMPTY(&(q->head)) || q->T == 0) return NULL;
 	int num = random() % q->T;
 	int ticket_tally = 0;
 	struct thread *current;
