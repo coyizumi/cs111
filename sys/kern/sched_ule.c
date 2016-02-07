@@ -593,7 +593,7 @@ tdq_runq_rem(struct tdq *tdq, struct thread *td)
 		ts->ts_flags &= ~TSF_XFERABLE;
 	}
 	/* If thread isn't root, remove it from ts->ts_lottoq instead */
-	if (! is_root (td))
+	if (! TD_IS_ROOT (td))
 	{
 		lottoq_remove (ts->ts_lottoq, td);
 		return;
@@ -2082,7 +2082,7 @@ sched_nice(struct proc *p, int nice)
 	
 	//#define is_root(td) (!((td)->td_ucred->cr_uid))
 	/* TODO - If non-root, don't set p_nice */
-	if(P_IS_ROOT(p){
+	if(P_IS_ROOT(p)){
 		
 	}
 	struct thread *td;
