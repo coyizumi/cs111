@@ -82,6 +82,7 @@ How many processes are engouh?
 	* Protect a process from moodifying its own memory in undesirable ways (such as writing to program code)
 
 Base and Limit Registers (old)
+
 * Special CPU registers: Base and LImitt
 	* Access to registers limited to system mode
 	* Regiesters contian
@@ -94,9 +95,11 @@ Base and Limit Registers (old)
 	* Logical address larger than limit -> error
 
 PHysical: Actual byte address
+
 Logical: Where the program things it is
 
 Swappiong
+
 *Mem allocation changes as
 	* Processes come into memory
 	* Processes leave memory
@@ -106,6 +109,7 @@ Need to find spaces of contiguous memory
 
 
 Swapping leaving rooom to grow
+
 * Need to allow programs to grow
 	* Allocate more memory for data
 	* Larger stack
@@ -115,6 +119,7 @@ Swapping leaving rooom to grow
 Take segment, swap it out, put it in a larger area
 
 Tracking memory usage
+
 * Operating systemm needs to track allocation state of memory
 	* Regions that are available to hand out
 	* Regions that are in use
@@ -126,6 +131,7 @@ Tracking memory usage
 	* slab allocation
 
 Bitmaps
+
 * Keep track of free/allocated mem with a bitmap
 	* One bit in map corresponds to a fixed size region of memory
 	* Bitmap is a constat size for a igven amount of memory
@@ -140,6 +146,7 @@ Bitmap keeps track of pages
 Concept: INternal and External fragmentation
 
 External: Space outside of blocks
+
 Internal: Wasted space inside blocks
 
 Tracking mem usage: Linked List
@@ -153,6 +160,7 @@ Tracking mem usage: Linked List
 	* More regions -> More space needed for free lists
 
 Allocating Memory
+
 * Search through greion list to find a large enough space
 * Suppose there are several coices: which one to use?
 	* First fit: the first suitable hole in the list
@@ -162,6 +170,7 @@ Allocating Memory
 * Option: Maintain separate queues for different-size holes
 
 Freeing memory
+
 * Allocation structures must be updated when momory is freed
 * Easy with bitmaps: just set the appropriate bits in the bitmap
 * Linked lists: modify adjacent elements as needed
@@ -169,6 +178,7 @@ Freeing memory
 	* May invovlve mergign two regions with the just-freed area
 
 Buddy alloction
+
 * Allocate memory in powers of two
 	* Good for objects of varied sizes
 * Split larger chunks to create two smaller chunks
@@ -178,6 +188,7 @@ Buddy alloction
 Slab Allocation is a thing
 
 Limitations of Swapping
+
 * Problems with swapping
 	* Process must fit into physical memory (impossible to run larger processes)
 	* Memory becomes fragmented
@@ -191,6 +202,7 @@ Limitations of Swapping
 Overlays: Only hold part of program you need. Program is like a tree, hold what parts of tree you need
 
 Virtual Memory
+
 * Basic idea: allow OS to hand out more memory than existt on the system
 * Keep recently used stuff in physical memory
 * Move less recently used tuff to disk
@@ -201,6 +213,7 @@ Virtual Memory
 	* CPU schedules B while process A waits for its memory to be retrieved from disk
 
 virtual and physical addresses
+
 * Program uses virtual addresses
 	* Addresses local to the process
 	* Hardware translates virtual adress to phhsical address
@@ -212,6 +225,7 @@ virtual and physical addresses
 If instr give page fault (page not in memory) grab it from disk
 
 Paiging and Page tables
+
 * Virtual addressesmapped to physical addresses
 	* Unitof mapping is called a page
 	* All addresses in same virtual page are in the same physical page
@@ -224,6 +238,7 @@ Paiging and Page tables
 	* 16KB phys mem
 
 What's in a page table entry?
+
 * Each entry contains:
 	* Valid bit: set if this logical page number hasa corresponding physical frame inmemoery
 		* if not valid, remainder of PTE is invalid
@@ -235,6 +250,7 @@ What's in a page table entry?
 If valid, has a physical page frame number, else is a hint to where thing is held on disk
 
 Mapping logical addresses to physical addresses
+
 * Split address from CPU into two pieces
 	* Page number (p)
 	* page offset (d)
@@ -246,6 +262,7 @@ Mapping logical addresses to physical addresses
 * Page size = 2^d bytes
 
 32 bit logical address
+
 20 bits page number 12 bits page offset
 
 page frame number is index into the page table
@@ -253,6 +270,7 @@ page frame number is index into the page table
 Two level page tables
 
 Problem: page tables can be too large
+
 * 2^32 in 4KB pages = 1 Million PTEs
 * Worse for 64 bit
 
@@ -276,6 +294,7 @@ Page table resides in Main memory
 	* Eliminate first access by eeping a hardware cache (called translation lookaside bufer or TLB) of recently used page table entries
 
 TLB (Translation lookaside buffer)
+
 * Search the tlb for the desired logical page number
 	* Serach entries in paralel (of TLB and memory)
 	* Use standared cache techniques
@@ -285,6 +304,7 @@ TLB (Translation lookaside buffer)
 	* Replace an entry in the TLB with the logical and physical page numbers from this reference
 
 Handling TLB misses
+
 * If PTE isn't found in TLB, OS needs to do the lookup in the page table
 * Lookup can be done in hardware or software
 * Hardware TLB replacement
@@ -297,6 +317,7 @@ Handling TLB misses
 	* LArger TLB (lower miss rate) can make this feasible
 
 How long do mem accesses take?
+
 * Assume the following times
 	* tlB lookup = a (often 0 - overlalped in cpu)
 	* mem access time = m
@@ -305,6 +326,7 @@ How long do mem accesses take?
 	* TLB structure can affect h as well
 
 Inverted page table
+
 * Reducec page table size further: keep on entry for each frame in memory
 	* alternative: merge tables for pages in mem on dist
 * PTE Contains
@@ -317,6 +339,7 @@ Inverted page table
 * Improve performance by using more advanced hashing algorithms
 
 Page replacement algorithms
+
 * Page fault forces a choice
 	* No room for new page (steady state)
 	* Which page must be removed to make room for an incoming page
@@ -327,6 +350,7 @@ Page replacement algorithms
 	* It'll probably be brought back in soon
 
 Optimal Page Replacement
+
 * What's the best we can poissibley do?
 	* assume perfec knowledge of the future
 	* not realizable in practice (usually)
@@ -339,6 +363,7 @@ Optimal Page Replacement
 * Nice but not realistic
 
 Not recently used (NRU) algorithm
+
 * each bit has reference and dirty bit
 * FOur classifications
 	* Not ref, not dirty 0
@@ -354,6 +379,7 @@ Not recently used (NRU) algorithm
 * Performance adequate (though not optimal)
 
 FIFO
+
 * Maintain linked list of all pages
 * Page at front replaced
 * Easy to implement
@@ -362,6 +388,7 @@ FIFO
 	* usage may be helpful in determining which to keep
 
 second chance
+
 * Modify FIFO to avoid throwing heavily used pages
 	* If ref 0 throw out
 	* If ref bit is 1
@@ -371,6 +398,7 @@ second chance
 * Still easy to implement, and better than plain FIFO
 
 Clock Algorithm
+
 * Same functionality as second chance
 * Simpler implementation
 	* Clock hand pointsto next page to replace
@@ -380,6 +408,7 @@ Clock Algorithm
 	* May involve going around the clock
 
 Least Recently Used (LRU)
+
 * Assume pages used recently will be used again soon
 	* throw out page that has been unused for longest time
 * Must keep alinked list of pages
