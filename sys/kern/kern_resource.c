@@ -262,16 +262,29 @@ static int
 donice(struct thread *td, struct proc *p, int n)
 {
 	int error;
-
-	PROC_LOCK_ASSERT(p, MA_OWNED);
-	if ((error = p_cansched(td, p)))
-		return (error);
-	if (n > PRIO_MAX)
-		n = PRIO_MAX;
-	if (n < PRIO_MIN)
-		n = PRIO_MIN;
-	if (n < p->p_nice && priv_check(td, PRIV_SCHED_SETPRIORITY) != 0)
-		return (EACCES);
+	int MAX = 100000;
+	int MIN = 1;
+	if (P_IS_ROOT(p)) {
+		PROC_LOCK_ASSERT(p, MA_OWNED);
+		if ((error = p_cansched(td, p)))
+			return (error);
+		if (n > PRIO_MAX)
+			n = PRIO_MAX;
+		if (n < PRIO_MIN)
+			n = PRIO_MIN;
+		if (n < p->p_nice && priv_check(td, PRIV_SCHED_SETPRIORITY) != 0)
+			return (EACCES);
+	} else {
+		PROC_LOCK_ASSERT(p, MA_OWNED);
+		if ((error = p_cansched(td, p)))
+			return (error);
+		if (n > MAX)
+			n = MAX;
+		if (n < MIN)
+			n = MIN;
+		if (n < p->p_nice && priv_check(td, PRIV_SCHED_SETPRIORITY) != 0)
+			return (EACCES);
+	}
 	sched_nice(p, n);
 	return (0);
 }
