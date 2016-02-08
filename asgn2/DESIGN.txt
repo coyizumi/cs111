@@ -166,6 +166,14 @@ tickets equal to the base ticket count. If it is being punished for
 high cpu usage, it loses tickets equal to the base count divided by
 two.
 
+Our goal in choosing this method is to provide a fast increase in well
+behaved threads, and a slower but still speedy decrease in poorly
+behaved threads. Additionally, we would like processes that are good
+to have a very fast increase in priority to begin with, followed by
+a slower (relative) increase later. By adding the base count each time
+the priority will double the first time, then increase by 50%, then
+~33%, 25%, and so on.
+
 After adjusting the ticket amounts, we update the total in the 
 thread's owning lottoq.
 ----------------------------------------------------------------------
@@ -181,3 +189,4 @@ This function performs bounds checking on n before passing it to
 sched_nice(). We have edited it so that for user processes the bounds
 are 1 to 100,000 for the ticket count. For root processes it remains
 the same.
+----------------------------------------------------------------------
