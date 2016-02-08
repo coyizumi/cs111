@@ -179,6 +179,12 @@ manually set to have a higher base count will receive more tickets
 each time they grow. The opposite is also true for processes whose
 priority has been manually lowered.
 
+Our initial implementation punished processes by subtracting the base
+tickets divided by two from the ticket count. The idea was that by
+having a higher reward, the harsh punishment was reasonable. But it
+would quickly result in greedier processes reaching only a single
+ticket.
+
 After adjusting the ticket amounts, we update the total in the 
 thread's owning lottoq.
 ----------------------------------------------------------------------
