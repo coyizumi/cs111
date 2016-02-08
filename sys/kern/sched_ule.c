@@ -398,7 +398,7 @@ static void lottoq_add(struct lottoq *q, struct thread *td)
 	q->T += td->td_tickets;
 	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
 	SDT_PROBE3(sched, , , lotto_enq, q, td, td->td_tickets);
-	td->td_lottoq = q;
+	td->td_owning_lottoq = q;
 }
 
 static void lottoq_remove (struct lottoq *q, struct thread *td)
@@ -406,7 +406,7 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 	q->T -= td->td_tickets;
 	TAILQ_REMOVE(&(q->head), td, td_lottoq);
 	SDT_PROBE3(sched, , , lotto_deq, q, td, td->td_tickets);
-	td->td_lottoq = NULL;
+	td->td_owning_lottoq = NULL;
 }
 
 struct thread *lottoq_choose(struct lottoq *q)
