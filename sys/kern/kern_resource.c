@@ -283,7 +283,7 @@ donice(struct thread *td, struct proc *p, int n)
 			n = MAX;
 		if (n < MIN)
 			n = MIN;
-		if (n < p->p_nice && priv_check(td, PRIV_SCHED_SETPRIORITY) != 0)
+		if (n > td->td_base_tickets && priv_check(td, PRIV_SCHED_SETPRIORITY) != 0)
 			return (EACCES);
 	}
 	sched_nice(p, n);
