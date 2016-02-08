@@ -10,19 +10,32 @@ The lottoq takes advantage of the TAILQ macros found in sys/queue.h.
 It holds a TAILQ of threads and keeps track of the total ticket count
 of threads it holds.
 
+The definition is as follows:
+
+struct lottoq {
+	struct lotto head;
+	int T;
+};
+
 Lottery Queue Functions
 ----------------------------------------------------------------------
 # static void lottoq_init(struct lottoq *q)
 
 Initializes the internal TAILQ and sets the total tickets to 0.
+
+Assumes q points to a valid lottoq struct.
 ----------------------------------------------------------------------
 # static void lottoq_add(struct lottoq *q, struct thread *td)
 
 Adds the thread td to lottoq q. Updates the ticket count.
+
+Assumes q and td point to a valid lottoq and thread.
 ----------------------------------------------------------------------
 # static void lottoq_remove (struct lottoq *q, struct thread *td)
 
 Removes the thread td from lottoq q. Updates the ticket count.
+
+Assumes q and td point to a valid lottoq and thread.
 ----------------------------------------------------------------------
 # struct thread *lottoq_choose(struct lottoq *q)
 
@@ -30,6 +43,8 @@ Performs a lottery selection. Pulls a ticket and finds the thread with
 the pulled ticket.
 
 Returns the chosen thread.
+
+Assumes q points to a valid lottoq.
 ----------------------------------------------------------------------
 
 # Thread
@@ -45,7 +60,7 @@ slightly. It now has three additional fields:
 	lottoq_choose().
 
 3. int td_base_tickets;
-	Currently unused.
+	The base tickets, set by nice.
 
 ----------------------------------------------------------------------
 
