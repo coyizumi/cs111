@@ -163,11 +163,11 @@ the value of later nice() calls.
 
 If the thread has waited a sufficient amount, it receives additional
 tickets equal to the base ticket count. If it is being punished for
-high cpu usage, it loses tickets equal to the base count divided by
-two.
+high cpu usage, it loses 10% of its current tickets (it is multiplied
+by 9 then divided by 10).
 
 Our goal in choosing this method is to provide a fast increase in well
-behaved threads, and a slower but still speedy decrease in poorly
+behaved threads, and a slow but still significant decrease in poorly
 behaved threads. Additionally, we would like processes that are good
 to have a very fast increase in priority to begin with, followed by
 a slower (relative) increase later. By adding the base count each time
