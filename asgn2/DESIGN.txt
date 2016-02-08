@@ -174,6 +174,11 @@ a slower (relative) increase later. By adding the base count each time
 the priority will double the first time, then increase by 50%, then
 ~33%, 25%, and so on.
 
+By adding tickets equal to the base ticket count, processes that are
+manually set to have a higher base count will receive more tickets
+each time they grow. The opposite is also true for processes whose
+priority has been manually lowered.
+
 After adjusting the ticket amounts, we update the total in the 
 thread's owning lottoq.
 ----------------------------------------------------------------------
