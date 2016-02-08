@@ -50,7 +50,7 @@ Assumes q points to a valid lottoq.
 # Thread
 
 To accomadate the new Lottery Queue, the thread struct was modified
-slightly. It now has three additional fields:
+slightly. It now has four additional fields:
 
 1. TAILQ_ENTRY(thread) td_lottoq
 	Used to create the internal TAILQ of the Lottery Queue.
@@ -62,6 +62,11 @@ slightly. It now has three additional fields:
 3. int td_base_tickets;
 	The base tickets, set by nice.
 
+4. struct lottoq *td_owning_lottoq
+	The lottoq that this thread is currently queued in. This is used
+	to update the ticket totals whenever td is assigned a different
+	ticket count.
+
 ----------------------------------------------------------------------
 
 # tdq
@@ -72,7 +77,7 @@ and idle processes.
 
 ----------------------------------------------------------------------
 
-td_sched
+# td_sched
 
 To accomodate the new Lottery Queue, the td_sched struct in sched_ule
 was modified to keep track of the most recently used lottoq.
@@ -96,7 +101,6 @@ true. Else it is false.
 # Core Functions
 
 ----------------------------------------------------------------------
-# static __inline void
 # tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 
 This function is used to add a thread to a tdq. We have added code to
@@ -106,7 +110,6 @@ This is accomplished using a combination of the TD_IS_ROOT macro to
 check for rootness, and the lottoq_add() function to add the thread to
 a lottoq.
 ----------------------------------------------------------------------
-# static __inline void
 # tdq_runq_rem(struct tdq *tdq, struct thread *td)
 
 This function is used to remove a thread from a tdq. We have added
@@ -116,7 +119,6 @@ root.
 This is accomplished using a combination of TD_IS_ROOT and the
 lottoq_remove() function.
 ----------------------------------------------------------------------
-# static struct thread *
 # lottoq_steal(struct lottoq *q, int cpu)
 
 This function applies the logic of runq_steal to a Lottery Queue.
@@ -124,7 +126,6 @@ This function applies the logic of runq_steal to a Lottery Queue.
 It finds and returns the first thread in the given lottery queue that
 can be migrated and scheduled on the new CPU.
 ----------------------------------------------------------------------
-# static struct thread *
 # tdq_steal(struct tdq *tdq, int cpu)
 
 This function is used to steal a thread from a thread queue. We have
@@ -133,7 +134,6 @@ stealable threads in the realtime and interactive runqs.
 
 This is accomplished by using lottoq_steal().
 ----------------------------------------------------------------------
-# static struct thread *
 # tdq_choose(struct tdq *tdq)
 
 This function is used to choose a task from the tdq. We have added
@@ -142,9 +142,42 @@ the built-in runqs.
 
 This is accomplished by using lottoq_choose().
 ----------------------------------------------------------------------
-# static void
 # tdq_setup(struct tdq *tdq)
 
 This function is used to initialize a tdq. We have added code to
 initialize the three lottoqs that we added to tdq.
 ----------------------------------------------------------------------
+# sched_priority(struct thread *td)
+
+This function assigns the given thread a new priority. We have added
+code to assign the thread a new ticket count as well.
+
+We use the compare the interactive score to the interactive threshold
+to determine if the process has been waiting a sufficient amount. If
+it is below the threshold, we reward its patient waiting with more
+tickets. If it is equal or above, we remove some tickets to teach it
+a lesson.
+
+We keep track of a base ticket count, initialized at 500 and set to
+the value of later nice() calls.
+
+If the thread has waited a sufficient amount, it receives additional
+tickets equal to the base ticket count. If it is being punished for
+high cpu usage, it loses tickets equal to the base count divided by
+two.
+
+After adjusting the ticket amounts, we update the total in the 
+thread's owning lottoq.
+----------------------------------------------------------------------
+# sched_nice(struct proc *p, int nice)
+
+This function sets the nice value of a root process, and we have
+edited it to set the ticket count (both current and base) of all of
+the threads within a user process.
+----------------------------------------------------------------------
+# donice(struct thread *td, struct proc *p, int n)
+
+This function performs bounds checking on n before passing it to
+sched_nice(). We have edited it so that for user processes the bounds
+are 1 to 100,000 for the ticket count. For root processes it remains
+the same.
