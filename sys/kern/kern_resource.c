@@ -255,6 +255,7 @@ sys_setpriority(td, uap)
 	return (error);
 }
 
+#define P_IS_ROOT(p) (!((p)->p_ucred->cr_uid))
 /*
  * Set "nice" for a (whole) process.
  */
