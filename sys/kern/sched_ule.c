@@ -398,6 +398,7 @@ static void lottoq_add(struct lottoq *q, struct thread *td)
 	q->T += td->td_tickets;
 	TAILQ_INSERT_TAIL(&(q->head), td, td_lottoq);
 	SDT_PROBE3(sched, , , lotto_enq, q, td, td->td_tickets);
+	td->td_lottoq = q;
 }
 
 static void lottoq_remove (struct lottoq *q, struct thread *td)
@@ -405,6 +406,7 @@ static void lottoq_remove (struct lottoq *q, struct thread *td)
 	q->T -= td->td_tickets;
 	TAILQ_REMOVE(&(q->head), td, td_lottoq);
 	SDT_PROBE3(sched, , , lotto_deq, q, td, td->td_tickets);
+	td->td_lottoq = NULL;
 }
 
 struct thread *lottoq_choose(struct lottoq *q)
@@ -1560,7 +1562,6 @@ sched_initticks(void *dummy)
 static int
 sched_interact_score(struct thread *td)
 {
-	/* TODO - figure out how this stuff works and determine if we should use it */
 	struct td_sched *ts;
 	int div;
 
@@ -1601,7 +1602,6 @@ sched_interact_score(struct thread *td)
 static void
 sched_priority(struct thread *td)
 {
-	/* TODO - Figure out what this does. Likely we'll be adding/removing tickets here */
 	int score;
 	int pri;
 
@@ -1620,7 +1620,9 @@ sched_priority(struct thread *td)
 	 * score.  Negative nice values make it easier for a thread to be
 	 * considered interactive.
 	 */
-	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
+
+	int inter_score = sched_interact_score(td);
+	score = imax(0, inter_score + td->td_proc->p_nice);
 	if (score < sched_interact) {
 		pri = PRI_MIN_INTERACT;
 		pri += ((PRI_MAX_INTERACT - PRI_MIN_INTERACT + 1) /
@@ -1642,7 +1644,18 @@ sched_priority(struct thread *td)
 		    SCHED_PRI_TICKS(td->td_sched)));
 	}
 	sched_user_prio(td, pri);
-
+	// If we're interactive
+	int tick_diff = td->td_tickets;
+	if (inter_score < sched_interact)
+	{
+		td->td_tickets = min (max (1, td->td_tickets + td->td_base_tickets) , 100000);
+	}
+	else
+	{
+		td->td_tickets = min (max (1, td->td_tickets - td->td_base_tickets / 2), 100000);
+	}
+	tick_diff = tick_diff - td->td_tickets;
+	if (td->td_lottoq) td->td_lottoq->T -= tick_diff;
 	return;
 }
 
@@ -2104,6 +2117,7 @@ sched_nice(struct proc *p, int nice)
 			sched_prio(td, td->td_base_user_pri);
 		}else{
 			td->td_base_tickets = nice;  //what does this equal?
+			td->td_tickets = nice;
 		}
 		thread_unlock(td);
 	}
