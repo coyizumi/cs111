@@ -1652,7 +1652,7 @@ sched_priority(struct thread *td)
 	}
 	else
 	{
-		td->td_tickets = min (max (1, td->td_tickets - td->td_base_tickets / 2), 100000);
+		td->td_tickets = min (max (1, td->td_tickets * 9/10) , 100000);
 	}
 	tick_diff = tick_diff - td->td_tickets;
 	if (td->td_owning_lottoq) td->td_owning_lottoq->T -= tick_diff;
