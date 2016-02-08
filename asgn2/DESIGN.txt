@@ -17,7 +17,7 @@ struct lottoq {
 	int T;
 };
 
-Lottery Queue Functions
+Lottery Queue Functions:
 ----------------------------------------------------------------------
 # static void lottoq_init(struct lottoq *q)
 
