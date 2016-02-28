@@ -932,6 +932,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int log_cache_count = 0;
 	int log_active_to_inactive_count = 0;
 	int log_inactive_to_active_count = 0;
+	int log_flush_count = 0;
 	
  
 	/*
@@ -1308,6 +1309,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 			if (vm_pageout_clean(m) != 0) {
 				--page_shortage;
 				--maxlaunder;
+				//Clean is called, after cleaning is done it is then flushed (assuming)
+				log_flush_count++;
 			}
 unlock_and_continue:
 			vm_page_lock_assert(m, MA_NOTOWNED);
@@ -1488,6 +1491,7 @@ relock_queues:
 	printf("PAGEOUT: Inactive Queue Contains: %d Pages\n", vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt);
 	printf("PAGEOUT: Pages added to Cache List: %d Pages\n", log_cache_count);
 	printf("PAGEOUT: Pages added to the Free List: %d Pages\n", log_free_count); 
+	printf("PAGEOUT: Numbers of Pages queued for Flush: %d Pages\n", log_flush_count);
 }
 
 static int vm_pageout_oom_vote;
