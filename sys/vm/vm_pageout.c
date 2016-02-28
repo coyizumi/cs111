@@ -1472,8 +1472,8 @@ relock_queues:
 	vm_pageout_mightbe_oom(vmd, pass);
 
 	//Prints out the syslogs that are needed
-	printf("Active Queue Contains : %d Pages", pq[1]->pq_cnt);
-	printf("Inactive Queue Contains: %d Pages", pq[0]->pq_cnt);
+	printf("Active Queue Contains : %d Pages", pq->vmd_pagequeues[PQ_ACTIVE]->pq_cnt);
+	printf("Inactive Queue Contains: %d Pages", pq->vmd_pagequeues[PQ_INACTIVE]->pq_cnt);
 	printf("Pages added to Cache List: %d Pages", log_cache_count);
 	printf("Pages added to the Free List: %d Pages", log_free_count); 
 }
