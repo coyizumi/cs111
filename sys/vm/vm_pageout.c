@@ -1443,7 +1443,8 @@ relock_queues:
 			//Custom
 			//Instead of subtracting, it's going to be dividing by 2 Activity Count
 			//m->act_count = min(m->act_count, ACT_DECLINE) / 2;
-			m->act_count -= min(m->act_count, ACT_DECLINE);
+			//m->act_count -= min(m->act_count, ACT_DECLINE);
+			m->act_count /= 2;
 			act_delta = m->act_count;
 		}
 
