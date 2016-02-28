@@ -1486,7 +1486,7 @@ relock_queues:
 
 	//Prints out the syslogs that are needed
 	printf("PAGEOUT: Pages moved from active to inactive: %d Pages\n", log_active_to_inactive_count);
-	printf("PAGEOUT: Pages moved from inactive to active: %d Pages", log_inactive_to_active_count); 
+	printf("PAGEOUT: Pages moved from inactive to active: %d Pages\n", log_inactive_to_active_count); 
 	printf("PAGEOUT: Active Queue Contains : %d Pages\n", vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt);
 	printf("PAGEOUT: Inactive Queue Contains: %d Pages\n", vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt);
 	printf("PAGEOUT: Pages added to Cache List: %d Pages\n", log_cache_count);
