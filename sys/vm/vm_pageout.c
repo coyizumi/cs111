@@ -1733,7 +1733,7 @@ vm_pageout_init(void)
 	 * case paging behaviors with stale active LRU.
 	 */
 	if (vm_pageout_update_period == 0)
-		vm_pageout_update_period = 10;
+		vm_pageout_update_period = 100;
 
 	/* XXX does not really belong here */
 	if (vm_page_max_wired == 0)
