@@ -1485,13 +1485,17 @@ relock_queues:
 	vm_pageout_mightbe_oom(vmd, pass);
 
 	//Prints out the syslogs that are needed
-	printf("PAGEOUT: Pages moved from active to inactive: %d Pages\n", log_active_to_inactive_count);
-	printf("PAGEOUT: Pages moved from inactive to active: %d Pages\n", log_inactive_to_active_count); 
-	printf("PAGEOUT: Active Queue Contains : %d Pages\n", vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt);
-	printf("PAGEOUT: Inactive Queue Contains: %d Pages\n", vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt);
-	printf("PAGEOUT: Pages added to Cache List: %d Pages\n", log_cache_count);
-	printf("PAGEOUT: Pages added to the Free List: %d Pages\n", log_free_count); 
-	printf("PAGEOUT: Numbers of Pages queued for Flush: %d Pages\n", log_flush_count);
+	printf("PAGEOUTh: %12s %12s %12s %12s %12s %12s %12s\n", "Active", "Inactive", "A->I", "I->A", "To Cache", "To Free", "Flush");
+	printf("PAGEOUTd: %12d %12d %12d %12d %12d %12d %12d\n", vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt, vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt,
+	                                               log_active_to_inactive_count, log_inactive_to_active_count, 
+	                                               log_cache_count, log_free_count, log_flush_count);
+	// printf("PAGEOUT: Pages moved from active to inactive: %d Pages\n", log_active_to_inactive_count);
+	// printf("PAGEOUT: Pages moved from inactive to active: %d Pages\n", log_inactive_to_active_count); 
+	// printf("PAGEOUT: Active Queue Contains : %d Pages\n", vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt);
+	// printf("PAGEOUT: Inactive Queue Contains: %d Pages\n", vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt);
+	// printf("PAGEOUT: Pages added to Cache List: %d Pages\n", log_cache_count);
+	// printf("PAGEOUT: Pages added to the Free List: %d Pages\n", log_free_count); 
+	// printf("PAGEOUT: Numbers of Pages queued for Flush: %d Pages\n", log_flush_count);
 }
 
 static int vm_pageout_oom_vote;
