@@ -930,6 +930,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	//system log stat counters
 	int log_free_count = 0;
 	int log_cache_count = 0;
+	int log_active_to_inactive_count = 0;
+	int log_inactive_to_active_count = 0;
 	
  
 	/*
@@ -1085,6 +1087,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		if (act_delta != 0) {
 			if (object->ref_count) {
 				vm_page_activate(m);
+				log_inactive_to_active_count++;
 				m->act_count += act_delta + ACT_ADVANCE;
 			} else {
 				vm_pagequeue_lock(pq);
@@ -1430,6 +1433,9 @@ relock_queues:
 			if (m->act_count > ACT_MAX)
 				m->act_count = ACT_MAX;
 		} else {
+			//Custom
+			//Instead of subtracting, it's going to be dividing by 2 Activity Count
+			//m->act_count = min(m->act_count, ACT_DECLINE) / 2;
 			m->act_count -= min(m->act_count, ACT_DECLINE);
 			act_delta = m->act_count;
 		}
@@ -1438,11 +1444,15 @@ relock_queues:
 		 * Move this page to the tail of the active or inactive
 		 * queue depending on usage.
 		 */
+		//Moved to Inactive tail
 		if (act_delta == 0) {
 			/* Dequeue to avoid later lock recursion. */
 			vm_page_dequeue_locked(m);
+			//Deactives send the page to the inactive list
 			vm_page_deactivate(m);
 			page_shortage--;
+			log_active_to_inactive_count++;
+		//Moved to Active tail
 		} else
 			vm_page_requeue_locked(m);
 		vm_page_unlock(m);
@@ -1476,6 +1486,8 @@ relock_queues:
 	printf("Inactive Queue Contains: %d Pages", vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt);
 	printf("Pages added to Cache List: %d Pages", log_cache_count);
 	printf("Pages added to the Free List: %d Pages", log_free_count); 
+	printf("Pages moved from active to inactive queue: %d Pages", log_active_to_inactive_count);
+	printf("Pages moved from inactive to active queue: %d Pages", log_inactive_to_active_count); 
 }
 
 static int vm_pageout_oom_vote;

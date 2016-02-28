@@ -2107,6 +2107,9 @@ vm_page_enqueue(int queue, vm_page_t m)
 	pq = &vm_phys_domain(m)->vmd_pagequeues[queue];
 	vm_pagequeue_lock(pq);
 	m->queue = queue;
+	//Custom
+	//When called, adding the queue to the front of the list instead of tail
+	//TAILQ_INSERT_HEAD(&pq->pq_pl, m, plinks.q);
 	TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
 	vm_pagequeue_cnt_inc(pq);
 	vm_pagequeue_unlock(pq);
@@ -2130,6 +2133,9 @@ vm_page_requeue(vm_page_t m)
 	pq = vm_page_pagequeue(m);
 	vm_pagequeue_lock(pq);
 	TAILQ_REMOVE(&pq->pq_pl, m, plinks.q);
+	//Custom
+	//Requeues it to the front of the same queue instead of end
+	//TAILQ_INSERT_HEAD(&pq->pq_pl, m, plinks.q);
 	TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
 	vm_pagequeue_unlock(pq);
 }
@@ -2151,6 +2157,8 @@ vm_page_requeue_locked(vm_page_t m)
 	pq = vm_page_pagequeue(m);
 	vm_pagequeue_assert_locked(pq);
 	TAILQ_REMOVE(&pq->pq_pl, m, plinks.q);
+	//Custom
+	//TAILQ_INSERT_HEAD(&pq->pq_pl, m, plinks.q);
 	TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
 }
 
