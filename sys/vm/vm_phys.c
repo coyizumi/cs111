@@ -248,9 +248,12 @@ vm_freelist_add(struct vm_freelist *fl, vm_page_t m, int order, int tail)
 
 	m->order = order;
 	if (tail)
-		TAILQ_INSERT_TAIL(&fl[order].pl, m, plinks.q);
-	else
+		//Custom
+		//TAILQ_INSERT_TAIL(&fl[order].pl, m, plinks.q);
 		TAILQ_INSERT_HEAD(&fl[order].pl, m, plinks.q);
+	else
+		//TAILQ_INSERT_HEAD(&fl[order].pl, m, plinks.q);
+		TAILQ_INSERT_TAIL(&fl[order].pl, m, plinks.q);
 	fl[order].lcnt++;
 }
 
