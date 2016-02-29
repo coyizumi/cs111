@@ -39,7 +39,8 @@ Same as vm_page_requeue, but the pagequeue must be locked beforehand.
 We have modified this function in the same way we modified
 vm_page_requeue.
 ----------------------------------------------------------------------
-#vm_phys.c: vm_freelist_add(struct vm_freelist *fl, vm_page_t m, int order, int tail)
+#vm_phys.c: vm_freelist_add(struct vm_freelist *fl,
+                            vm_page_t m, int order, int tail)
 
 This function adds the page to the freelist. It takes in a variable
 specifying whether the page should be added to the head or the tail.
