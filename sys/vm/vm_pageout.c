@@ -933,6 +933,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int log_active_to_inactive_count = 0;
 	int log_inactive_to_active_count = 0;
 	int log_flush_count = 0;
+	int log_inactive_scanned = 0;
+	int log_active_scanned = 0;
 	
  
 	/*
@@ -1001,6 +1003,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	for (m = TAILQ_FIRST(&pq->pq_pl);
 	     m != NULL && maxscan-- > 0 && page_shortage > 0;
 	     m = next) {
+		log_inactive_scanned++;
 		vm_pagequeue_assert_locked(pq);
 		KASSERT(queues_locked, ("unlocked queues"));
 		KASSERT(m->queue == PQ_INACTIVE, ("Inactive queue %p", m));
@@ -1384,6 +1387,7 @@ relock_queues:
 	 */
 	m = TAILQ_FIRST(&pq->pq_pl);
 	while (m != NULL && maxscan-- > 0 && page_shortage > 0) {
+		log_active_scanned++;
 
 		KASSERT(m->queue == PQ_ACTIVE,
 		    ("vm_pageout_scan: page %p isn't active", m));
@@ -1485,10 +1489,11 @@ relock_queues:
 	vm_pageout_mightbe_oom(vmd, pass);
 
 	//Prints out the syslogs that are needed
-	printf("PAGEOUTh: %12s %12s %12s %12s %12s %12s %12s\n", "Active", "Inactive", "A->I", "I->A", "To Cache", "To Free", "Flush");
-	printf("PAGEOUTd: %12d %12d %12d %12d %12d %12d %12d\n", vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt, vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt,
-	                                               log_active_to_inactive_count, log_inactive_to_active_count, 
-	                                               log_cache_count, log_free_count, log_flush_count);
+	printf("PAGEOUTh: %12s %12s %12s %12s %12s %12s %12s %12s %12s\n", "Scanned A", "Scanned I", "Active", "Inactive", "A->I", "I->A", "To Cache", "To Free", "Flush");
+	printf("PAGEOUTd: %12d %12d %12d %12d %12d %12d %12d %12d %12d\n", log_active_scanned, log_inactive_scanned, vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt,
+												    vmd->vmd_pagequeues[PQ_INACTIVE].pq_cnt,
+	                                                log_active_to_inactive_count, log_inactive_to_active_count, 
+	                                                log_cache_count, log_free_count, log_flush_count);
 	// printf("PAGEOUT: Pages moved from active to inactive: %d Pages\n", log_active_to_inactive_count);
 	// printf("PAGEOUT: Pages moved from inactive to active: %d Pages\n", log_inactive_to_active_count); 
 	// printf("PAGEOUT: Active Queue Contains : %d Pages\n", vmd->vmd_pagequeues[PQ_ACTIVE].pq_cnt);
