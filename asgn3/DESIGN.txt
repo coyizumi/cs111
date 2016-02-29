@@ -1,9 +1,9 @@
 ----------------------------------------------------------------------
 
-#Asgn 3 - Functions that were modified - Slim Chance Algorithm
+# Asgn 3 - Functions that were modified - Slim Chance Algorithm
 
 ----------------------------------------------------------------------
-#vm_pageout.c: vm_pageout_scan(struct vm_domain *vmd, int pass)
+# vm_pageout.c: vm_pageout_scan(struct vm_domain *vmd, int pass)
 
 This function does most of the work for the pageout system. It scans
 pages to determine if any need to be moved to a different queue.
@@ -21,25 +21,25 @@ At the end of the function, we print these 7 counters as well as the
 number of pages within the active and inactive queues.
 
 ----------------------------------------------------------------------
-#vm_page.c: vm_page_enqueue(int queue, vm_page_t m)
+# vm_page.c: vm_page_enqueue(int queue, vm_page_t m)
 
 This function adds the given page to the specified queue (either 
 active or inactive). We have changed it so that it adds pages to the
 head of the queue, rather than the tail.
 ----------------------------------------------------------------------
-#vm_page.c: vm_page_requeue(vm_page_t m)
+# vm_page.c: vm_page_requeue(vm_page_t m)
 
 This function removes and then requeues the given page. We have
 changed it so that it adds pages to the head of the queue, rather than
 the tail.
 ----------------------------------------------------------------------
-#vm_page.c: vm_page_requeue_locked(vm_page_t m)
+# vm_page.c: vm_page_requeue_locked(vm_page_t m)
 
 Same as vm_page_requeue, but the pagequeue must be locked beforehand.
 We have modified this function in the same way we modified
 vm_page_requeue.
 ----------------------------------------------------------------------
-#vm_phys.c: vm_freelist_add(struct vm_freelist *fl,
+# vm_phys.c: vm_freelist_add(struct vm_freelist *fl,
                             vm_page_t m, int order, int tail)
 
 This function adds the page to the freelist. It takes in a variable
@@ -47,3 +47,47 @@ specifying whether the page should be added to the head or the tail.
 We have changed it to insert the page at the side of the queue that is
 opposite the side specified.
 ----------------------------------------------------------------------
+
+# Testing Methodology
+
+----------------------------------------------------------------------
+
+# Creating Memory Stress
+
+To force memory scarcity, we reduced the machine's memory to 256MB.
+
+To stress this memory, we ran the following command:
+
+stress-ng -m 1 --vm-bytes 1G
+
+# Gathering the Data
+
+We formatted our logging statements in such a way that they could
+easily be extracted using awk. The following command was used to
+convert our system logs into a csv file:
+
+tail -F /var/log/messages | gawk '$6 ~ /^PAGEOUTd/
+> {print $3 "," $7 "," $8 "," $9 "," $10 "," $11 "," $12 "," $13 ","
+> $14 "," $15 > "testx_log.csv";fflush(stdout);}'
+
+tail -F /var/log/messages prints the log messages as they arrive,
+and will switch to the newly created log file whenever the old one
+rolls over (which happens frequently when printing a line each second)
+
+This output is piped into gawk which filters out lines that are not
+our data lines (we mark these lines with the tag PAGEOUTd). It then
+separates all of the values in the log with commas and prints them to
+a csv file.
+
+We also stored the value of the vmstat call throughout testing using
+the following command:
+
+vmstat -w 1 -H | gawk '($0 !~ "procs") && ($0 !~ "flt") 
+> {print strftime("%H:%M:%S") "," $4 "," $5 "," $6 > 
+> "test2_vmstat.csv";fflush(stdout);}'
+
+vmstat -w 1 -H prints the output of vmstat once every 1 second. The -H
+option specifies that numbers should be raw rather than human readable
+(1024 rather than 1K). This is piped into gawk which filters out the
+headers and prints a timestamp followed by the avm, fre, and flt
+values to a csv file.
