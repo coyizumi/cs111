@@ -1,8 +1,17 @@
+    /****************************************************************/
+   /                   #######################                      /
+  /                    ## Asgn 3 Design Doc ##                     /
+ /                     #######################                    /
+/----------------------------------------------------------------/
+
+
+
+----------------------------------------------------------------------
+# Part 1: Testing Methodology
+  Functions that were modified to implement Slim Chance Algorithm
 ----------------------------------------------------------------------
 
-# Asgn 3 - Functions that were modified - Slim Chance Algorithm
 
-----------------------------------------------------------------------
 # vm_pageout.c: vm_pageout_scan(struct vm_domain *vmd, int pass)
 
 This function does most of the work for the pageout system. It scans
@@ -46,6 +55,7 @@ This function adds the page to the freelist. It takes in a variable
 specifying whether the page should be added to the head or the tail.
 We have changed it to insert the page at the side of the queue that is
 opposite the side specified.
+
 ----------------------------------------------------------------------
 
 # Testing Methodology
