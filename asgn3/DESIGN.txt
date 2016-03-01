@@ -2,14 +2,14 @@
    /                   #######################                      /
   /                    ## Asgn 3 Design Doc ##                     /
  /                     #######################                    /
-/----------------------------------------------------------------/
+/****************************************************************/
 
 
 
-#---------------------------------------------------------------------------
-# Part 1: Implementing a custom paging algorithm
-# The following functions were modified to implement Slim Chance Algorithm
-#---------------------------------------------------------------------------
+#---------------------------------------------------------------------------#
+# PART 1: Implementing a custom paging algorithm                            #
+# The following functions were modified to implement Slim Chance Algorithm  #
+#---------------------------------------------------------------------------#
 
 ((1))
 ----------------------------------------------------------------------
@@ -66,11 +66,11 @@ opposite the side specified.
 
 
 
-#---------------------------------------------------------------------------
-# Part 2: Testing Methodology
-# A series of tests were run to determine the differences between the
-# Slim Chance algorithm and the generic algorithm. 
-#---------------------------------------------------------------------------
+#------------------------------------------------------------------------#
+# PART 2: Testing Methodology                                            #
+# A series of tests were run to determine the differences between the    #
+# Slim Chance algorithm and the generic algorithm.                       #
+#------------------------------------------------------------------------#
 
 # Creating Memory Stress
 
