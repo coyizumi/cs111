@@ -113,3 +113,26 @@ option specifies that numbers should be raw rather than human readable
 (1024 rather than 1K). This is piped into gawk which filters out the
 headers and prints a timestamp followed by the avm, fre, and flt
 values to a csv file.
+
+
+
+
+
+TABLES (work in progress):
+
+  TEST 1 (6 minute period)   GENERIC     CUSTOM
+---------------------------------------------------
+| average active scanned   | 113,804  |  111,357  |
+| average inactive scanned | 10203    |  22978    |
+| average active           | 908,516  |  903,285  | 
+| average inactive         | 36,561   |  47,123   |
+| average active->inactive | 1,665    |  1,403    |
+| average inactive->active | 1,156    |  895      |
+| average moved to cache   | 345      |  1126     |
+| average flushed          | 30	      |  76       |
+---------------------------------------------------
+
+
+
+
+
