@@ -1,0 +1,29 @@
+See branch assignment_3 for code.
+
+My Work:
+
+Most of my efforts went into setting up our system for collecting
+data. This involved formatting our system logs in such a way that the
+information could be easily extracted, then writing a script to do
+this extraction using the program 'gawk'. Another gawk script was
+created to pull data from the 'vmstat' program.
+
+I also aided in finding the specific functions we would need to 
+modify, and I helped to write the design document.
+
+Jason Vance:
+
+His main contribution this week was his hard work crunching numbers
+in Excel. None of us were particularly familiar with Excel going in,
+but, by putting a significant number of hours into it, Jason was able
+to set up a number of graphs and statistics.
+
+He also helped in other areas of the project, such as writing the
+design document and searching through the existing code.
+
+Timmy Ma Kwan:
+
+Timmy's main contribution was actually editing the code. Once we
+discovered the areas in need of change, he made the changes.
+
+Like Jason and I, he also helped write the design document.
