@@ -74,9 +74,9 @@ opposite the side specified.
 
 # Creating Memory Stress
 
-To force memory scarcity, we reduced the machine's memory to 256MB. This is very close
-to FreeBSD's minimum requirement of 64MB. Since the system memory is so low it will 
-force the OS to start paging out memory to disk. 
+To force memory scarcity, we reduced the machine's memory to 256MB. This
+is very close to FreeBSD's minimum requirement of 64MB. Since the system 
+memory is so low it will force the OS to start paging out memory to disk. 
 
 To stress this memory, we ran the following command:
 	$ stress-ng -m 1 --vm-bytes 1G
