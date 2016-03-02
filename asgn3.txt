@@ -1,0 +1,6 @@
+Coy Humphrey (CAPTAIN)
+Jason Vance
+Timmy Ma Kwan
+
+See asg3 directory in branch master for documentation
+See branch assignment_3 for code
