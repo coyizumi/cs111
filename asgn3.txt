@@ -4,3 +4,6 @@ Timmy Ma Kwan
 
 See asg3 directory in branch master for documentation
 See branch assignment_3 for code
+
+Tag for code: assignment_3_code
+Tag for documentation: assignment_3_documentation
