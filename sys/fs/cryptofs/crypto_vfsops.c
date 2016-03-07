@@ -29,15 +29,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)null_vfsops.c	8.2 (Berkeley) 1/21/94
+ *	@(#)crypto_vfsops.c	8.2 (Berkeley) 1/21/94
  *
  * @(#)lofs_vfsops.c	1.2 (Berkeley) 6/18/92
- * $FreeBSD: releng/10.2/sys/fs/nullfs/null_vfsops.c 282270 2015-04-30 12:39:24Z rmacklem $
+ * $FreeBSD: releng/10.2/sys/fs/cryptofs/crypto_vfsops.c 282270 2015-04-30 12:39:24Z rmacklem $
  */
 
 /*
  * Null Layer
- * (See null_vnops.c for a description of what this does.)
+ * (See crypto_vnops.c for a description of what this does.)
  */
 
 #include <sys/param.h>
@@ -52,38 +52,38 @@
 #include <sys/vnode.h>
 #include <sys/jail.h>
 
-#include <fs/nullfs/null.h>
+#include <fs/cryptofs/crypto.h>
 
-static MALLOC_DEFINE(M_NULLFSMNT, "nullfs_mount", "NULLFS mount structure");
+static MALLOC_DEFINE(M_CRYPTOFSMNT, "cryptofs_mount", "CRYPTOFS mount structure");
 
-static vfs_fhtovp_t	nullfs_fhtovp;
-static vfs_mount_t	nullfs_mount;
-static vfs_quotactl_t	nullfs_quotactl;
-static vfs_root_t	nullfs_root;
-static vfs_sync_t	nullfs_sync;
-static vfs_statfs_t	nullfs_statfs;
-static vfs_unmount_t	nullfs_unmount;
-static vfs_vget_t	nullfs_vget;
-static vfs_extattrctl_t	nullfs_extattrctl;
+static vfs_fhtovp_t	cryptofs_fhtovp;
+static vfs_mount_t	cryptofs_mount;
+static vfs_quotactl_t	cryptofs_quotactl;
+static vfs_root_t	cryptofs_root;
+static vfs_sync_t	cryptofs_sync;
+static vfs_statfs_t	cryptofs_statfs;
+static vfs_unmount_t	cryptofs_unmount;
+static vfs_vget_t	cryptofs_vget;
+static vfs_extattrctl_t	cryptofs_extattrctl;
 
 /*
- * Mount null layer
+ * Mount crypto layer
  */
 static int
-nullfs_mount(struct mount *mp)
+cryptofs_mount(struct mount *mp)
 {
 	int error = 0;
 	struct vnode *lowerrootvp, *vp;
-	struct vnode *nullm_rootvp;
-	struct null_mount *xmp;
+	struct vnode *cryptom_rootvp;
+	struct crypto_mount *xmp;
 	struct thread *td = curthread;
 	char *target;
 	int isvnunlocked = 0, len;
 	struct nameidata nd, *ndp = &nd;
 
-	NULLFSDEBUG("nullfs_mount(mp = %p)\n", (void *)mp);
+	CRYPTOFSDEBUG("cryptofs_mount(mp = %p)\n", (void *)mp);
 
-	if (!prison_allow(td->td_ucred, PR_ALLOW_MOUNT_NULLFS))
+	if (!prison_allow(td->td_ucred, PR_ALLOW_MOUNT_CRYPTOFS))
 		return (EPERM);
 	if (mp->mnt_flag & MNT_ROOTFS)
 		return (EOPNOTSUPP);
@@ -95,7 +95,7 @@ nullfs_mount(struct mount *mp)
 		/*
 		 * Only support update mounts for NFS export.
 		 */
-		if (vfs_flagopt(mp->mnt_optnew, "export", NULL, 0))
+		if (vfs_flagopt(mp->mnt_optnew, "export", CRYPTO, 0))
 			return (0);
 		else
 			return (EOPNOTSUPP);
@@ -111,7 +111,7 @@ nullfs_mount(struct mount *mp)
 	/*
 	 * Unlock lower node to avoid possible deadlock.
 	 */
-	if ((mp->mnt_vnodecovered->v_op == &null_vnodeops) &&
+	if ((mp->mnt_vnodecovered->v_op == &crypto_vnodeops) &&
 	    VOP_ISLOCKED(mp->mnt_vnodecovered) == LK_EXCLUSIVE) {
 		VOP_UNLOCK(mp->mnt_vnodecovered, 0);
 		isvnunlocked = 1;
@@ -139,60 +139,60 @@ nullfs_mount(struct mount *mp)
 	lowerrootvp = ndp->ni_vp;
 
 	/*
-	 * Check multi null mount to avoid `lock against myself' panic.
+	 * Check multi crypto mount to avoid `lock against myself' panic.
 	 */
-	if (lowerrootvp == VTONULL(mp->mnt_vnodecovered)->null_lowervp) {
-		NULLFSDEBUG("nullfs_mount: multi null mount?\n");
+	if (lowerrootvp == VTOCRYPTO(mp->mnt_vnodecovered)->crypto_lowervp) {
+		CRYPTOFSDEBUG("cryptofs_mount: multi crypto mount?\n");
 		vput(lowerrootvp);
 		return (EDEADLK);
 	}
 
-	xmp = (struct null_mount *) malloc(sizeof(struct null_mount),
-	    M_NULLFSMNT, M_WAITOK | M_ZERO);
+	xmp = (struct crypto_mount *) malloc(sizeof(struct crypto_mount),
+	    M_CRYPTOFSMNT, M_WAITOK | M_ZERO);
 
 	/*
 	 * Save reference to underlying FS
 	 */
-	xmp->nullm_vfs = lowerrootvp->v_mount;
+	xmp->cryptom_vfs = lowerrootvp->v_mount;
 
 	/*
 	 * Save reference.  Each mount also holds
 	 * a reference on the root vnode.
 	 */
-	error = null_nodeget(mp, lowerrootvp, &vp);
+	error = crypto_nodeget(mp, lowerrootvp, &vp);
 	/*
 	 * Make sure the node alias worked
 	 */
 	if (error) {
-		free(xmp, M_NULLFSMNT);
+		free(xmp, M_CRYPTOFSMNT);
 		return (error);
 	}
 
 	/*
 	 * Keep a held reference to the root vnode.
-	 * It is vrele'd in nullfs_unmount.
+	 * It is vrele'd in cryptofs_unmount.
 	 */
-	nullm_rootvp = vp;
-	nullm_rootvp->v_vflag |= VV_ROOT;
-	xmp->nullm_rootvp = nullm_rootvp;
+	cryptom_rootvp = vp;
+	cryptom_rootvp->v_vflag |= VV_ROOT;
+	xmp->cryptom_rootvp = cryptom_rootvp;
 
 	/*
 	 * Unlock the node (either the lower or the alias)
 	 */
 	VOP_UNLOCK(vp, 0);
 
-	if (NULLVPTOLOWERVP(nullm_rootvp)->v_mount->mnt_flag & MNT_LOCAL) {
+	if (CRYPTOVPTOLOWERVP(cryptom_rootvp)->v_mount->mnt_flag & MNT_LOCAL) {
 		MNT_ILOCK(mp);
 		mp->mnt_flag |= MNT_LOCAL;
 		MNT_IUNLOCK(mp);
 	}
 
-	xmp->nullm_flags |= NULLM_CACHE;
-	if (vfs_getopt(mp->mnt_optnew, "nocache", NULL, NULL) == 0)
-		xmp->nullm_flags &= ~NULLM_CACHE;
+	xmp->cryptom_flags |= CRYPTOM_CACHE;
+	if (vfs_getopt(mp->mnt_optnew, "nocache", CRYPTO, CRYPTO) == 0)
+		xmp->cryptom_flags &= ~CRYPTOM_CACHE;
 
 	MNT_ILOCK(mp);
-	if ((xmp->nullm_flags & NULLM_CACHE) != 0) {
+	if ((xmp->cryptom_flags & CRYPTOM_CACHE) != 0) {
 		mp->mnt_kern_flag |= lowerrootvp->v_mount->mnt_kern_flag &
 		    (MNTK_SHARED_WRITES | MNTK_LOOKUP_SHARED |
 		    MNTK_EXTENDED_SHARED);
@@ -203,50 +203,50 @@ nullfs_mount(struct mount *mp)
 	MNT_IUNLOCK(mp);
 	mp->mnt_data = xmp;
 	vfs_getnewfsid(mp);
-	if ((xmp->nullm_flags & NULLM_CACHE) != 0) {
-		MNT_ILOCK(xmp->nullm_vfs);
-		TAILQ_INSERT_TAIL(&xmp->nullm_vfs->mnt_uppers, mp,
+	if ((xmp->cryptom_flags & CRYPTOM_CACHE) != 0) {
+		MNT_ILOCK(xmp->cryptom_vfs);
+		TAILQ_INSERT_TAIL(&xmp->cryptom_vfs->mnt_uppers, mp,
 		    mnt_upper_link);
-		MNT_IUNLOCK(xmp->nullm_vfs);
+		MNT_IUNLOCK(xmp->cryptom_vfs);
 	}
 
 	vfs_mountedfrom(mp, target);
 
-	NULLFSDEBUG("nullfs_mount: lower %s, alias at %s\n",
+	CRYPTOFSDEBUG("cryptofs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 	return (0);
 }
 
 /*
- * Free reference to null layer
+ * Free reference to crypto layer
  */
 static int
-nullfs_unmount(mp, mntflags)
+cryptofs_unmount(mp, mntflags)
 	struct mount *mp;
 	int mntflags;
 {
-	struct null_mount *mntdata;
+	struct crypto_mount *mntdata;
 	struct mount *ump;
 	int error, flags;
 
-	NULLFSDEBUG("nullfs_unmount: mp = %p\n", (void *)mp);
+	CRYPTOFSDEBUG("cryptofs_unmount: mp = %p\n", (void *)mp);
 
 	if (mntflags & MNT_FORCE)
 		flags = FORCECLOSE;
 	else
 		flags = 0;
 
-	/* There is 1 extra root vnode reference (nullm_rootvp). */
+	/* There is 1 extra root vnode reference (cryptom_rootvp). */
 	error = vflush(mp, 1, flags, curthread);
 	if (error)
 		return (error);
 
 	/*
-	 * Finally, throw away the null_mount structure
+	 * Finally, throw away the crypto_mount structure
 	 */
 	mntdata = mp->mnt_data;
-	ump = mntdata->nullm_vfs;
-	if ((mntdata->nullm_flags & NULLM_CACHE) != 0) {
+	ump = mntdata->cryptom_vfs;
+	if ((mntdata->cryptom_flags & CRYPTOM_CACHE) != 0) {
 		MNT_ILOCK(ump);
 		while ((ump->mnt_kern_flag & MNTK_VGONE_UPPER) != 0) {
 			ump->mnt_kern_flag |= MNTK_VGONE_WAITER;
@@ -255,27 +255,27 @@ nullfs_unmount(mp, mntflags)
 		TAILQ_REMOVE(&ump->mnt_uppers, mp, mnt_upper_link);
 		MNT_IUNLOCK(ump);
 	}
-	mp->mnt_data = NULL;
-	free(mntdata, M_NULLFSMNT);
+	mp->mnt_data = CRYPTO;
+	free(mntdata, M_CRYPTOFSMNT);
 	return (0);
 }
 
 static int
-nullfs_root(mp, flags, vpp)
+cryptofs_root(mp, flags, vpp)
 	struct mount *mp;
 	int flags;
 	struct vnode **vpp;
 {
 	struct vnode *vp;
 
-	NULLFSDEBUG("nullfs_root(mp = %p, vp = %p->%p)\n", (void *)mp,
-	    (void *)MOUNTTONULLMOUNT(mp)->nullm_rootvp,
-	    (void *)NULLVPTOLOWERVP(MOUNTTONULLMOUNT(mp)->nullm_rootvp));
+	CRYPTOFSDEBUG("cryptofs_root(mp = %p, vp = %p->%p)\n", (void *)mp,
+	    (void *)MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp,
+	    (void *)CRYPTOVPTOLOWERVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp));
 
 	/*
 	 * Return locked reference to root.
 	 */
-	vp = MOUNTTONULLMOUNT(mp)->nullm_rootvp;
+	vp = MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp;
 	VREF(vp);
 
 	ASSERT_VOP_UNLOCKED(vp, "root vnode is locked");
@@ -285,30 +285,30 @@ nullfs_root(mp, flags, vpp)
 }
 
 static int
-nullfs_quotactl(mp, cmd, uid, arg)
+cryptofs_quotactl(mp, cmd, uid, arg)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
 {
-	return VFS_QUOTACTL(MOUNTTONULLMOUNT(mp)->nullm_vfs, cmd, uid, arg);
+	return VFS_QUOTACTL(MOUNTTOCRYPTOMOUNT(mp)->cryptom_vfs, cmd, uid, arg);
 }
 
 static int
-nullfs_statfs(mp, sbp)
+cryptofs_statfs(mp, sbp)
 	struct mount *mp;
 	struct statfs *sbp;
 {
 	int error;
 	struct statfs mstat;
 
-	NULLFSDEBUG("nullfs_statfs(mp = %p, vp = %p->%p)\n", (void *)mp,
-	    (void *)MOUNTTONULLMOUNT(mp)->nullm_rootvp,
-	    (void *)NULLVPTOLOWERVP(MOUNTTONULLMOUNT(mp)->nullm_rootvp));
+	CRYPTOFSDEBUG("cryptofs_statfs(mp = %p, vp = %p->%p)\n", (void *)mp,
+	    (void *)MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp,
+	    (void *)CRYPTOVPTOLOWERVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp));
 
 	bzero(&mstat, sizeof(mstat));
 
-	error = VFS_STATFS(MOUNTTONULLMOUNT(mp)->nullm_vfs, &mstat);
+	error = VFS_STATFS(MOUNTTOCRYPTOMOUNT(mp)->cryptom_vfs, &mstat);
 	if (error)
 		return (error);
 
@@ -327,18 +327,18 @@ nullfs_statfs(mp, sbp)
 }
 
 static int
-nullfs_sync(mp, waitfor)
+cryptofs_sync(mp, waitfor)
 	struct mount *mp;
 	int waitfor;
 {
 	/*
-	 * XXX - Assumes no data cached at null layer.
+	 * XXX - Assumes no data cached at crypto layer.
 	 */
 	return (0);
 }
 
 static int
-nullfs_vget(mp, ino, flags, vpp)
+cryptofs_vget(mp, ino, flags, vpp)
 	struct mount *mp;
 	ino_t ino;
 	int flags;
@@ -347,16 +347,16 @@ nullfs_vget(mp, ino, flags, vpp)
 	int error;
 
 	KASSERT((flags & LK_TYPE_MASK) != 0,
-	    ("nullfs_vget: no lock requested"));
+	    ("cryptofs_vget: no lock requested"));
 
-	error = VFS_VGET(MOUNTTONULLMOUNT(mp)->nullm_vfs, ino, flags, vpp);
+	error = VFS_VGET(MOUNTTOCRYPTOMOUNT(mp)->cryptom_vfs, ino, flags, vpp);
 	if (error != 0)
 		return (error);
-	return (null_nodeget(mp, *vpp, vpp));
+	return (crypto_nodeget(mp, *vpp, vpp));
 }
 
 static int
-nullfs_fhtovp(mp, fidp, flags, vpp)
+cryptofs_fhtovp(mp, fidp, flags, vpp)
 	struct mount *mp;
 	struct fid *fidp;
 	int flags;
@@ -364,15 +364,15 @@ nullfs_fhtovp(mp, fidp, flags, vpp)
 {
 	int error;
 
-	error = VFS_FHTOVP(MOUNTTONULLMOUNT(mp)->nullm_vfs, fidp, flags,
+	error = VFS_FHTOVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_vfs, fidp, flags,
 	    vpp);
 	if (error != 0)
 		return (error);
-	return (null_nodeget(mp, *vpp, vpp));
+	return (crypto_nodeget(mp, *vpp, vpp));
 }
 
 static int                        
-nullfs_extattrctl(mp, cmd, filename_vp, namespace, attrname)
+cryptofs_extattrctl(mp, cmd, filename_vp, namespace, attrname)
 	struct mount *mp;
 	int cmd;
 	struct vnode *filename_vp;
@@ -380,77 +380,77 @@ nullfs_extattrctl(mp, cmd, filename_vp, namespace, attrname)
 	const char *attrname;
 {
 
-	return (VFS_EXTATTRCTL(MOUNTTONULLMOUNT(mp)->nullm_vfs, cmd,
+	return (VFS_EXTATTRCTL(MOUNTTOCRYPTOMOUNT(mp)->cryptom_vfs, cmd,
 	    filename_vp, namespace, attrname));
 }
 
 static void
-nullfs_reclaim_lowervp(struct mount *mp, struct vnode *lowervp)
+cryptofs_reclaim_lowervp(struct mount *mp, struct vnode *lowervp)
 {
 	struct vnode *vp;
 
-	vp = null_hashget(mp, lowervp);
-	if (vp == NULL)
+	vp = crypto_hashget(mp, lowervp);
+	if (vp == CRYPTO)
 		return;
-	VTONULL(vp)->null_flags |= NULLV_NOUNLOCK;
+	VTOCRYPTO(vp)->crypto_flags |= CRYPTOV_NOUNLOCK;
 	vgone(vp);
 	vput(vp);
 }
 
 static void
-nullfs_unlink_lowervp(struct mount *mp, struct vnode *lowervp)
+cryptofs_unlink_lowervp(struct mount *mp, struct vnode *lowervp)
 {
 	struct vnode *vp;
-	struct null_node *xp;
+	struct crypto_node *xp;
 
-	vp = null_hashget(mp, lowervp);
-	if (vp == NULL)
+	vp = crypto_hashget(mp, lowervp);
+	if (vp == CRYPTO)
 		return;
-	xp = VTONULL(vp);
-	xp->null_flags |= NULLV_DROP | NULLV_NOUNLOCK;
+	xp = VTOCRYPTO(vp);
+	xp->crypto_flags |= CRYPTOV_DROP | CRYPTOV_NOUNLOCK;
 	vhold(vp);
 	vunref(vp);
 
 	if (vp->v_usecount == 0) {
 		/*
 		 * If vunref() dropped the last use reference on the
-		 * nullfs vnode, it must be reclaimed, and its lock
+		 * cryptofs vnode, it must be reclaimed, and its lock
 		 * was split from the lower vnode lock.  Need to do
 		 * extra unlock before allowing the final vdrop() to
 		 * free the vnode.
 		 */
 		KASSERT((vp->v_iflag & VI_DOOMED) != 0,
-		    ("not reclaimed nullfs vnode %p", vp));
+		    ("not reclaimed cryptofs vnode %p", vp));
 		VOP_UNLOCK(vp, 0);
 	} else {
 		/*
-		 * Otherwise, the nullfs vnode still shares the lock
+		 * Otherwise, the cryptofs vnode still shares the lock
 		 * with the lower vnode, and must not be unlocked.
-		 * Also clear the NULLV_NOUNLOCK, the flag is not
+		 * Also clear the CRYPTOV_NOUNLOCK, the flag is not
 		 * relevant for future reclamations.
 		 */
 		ASSERT_VOP_ELOCKED(vp, "unlink_lowervp");
 		KASSERT((vp->v_iflag & VI_DOOMED) == 0,
-		    ("reclaimed nullfs vnode %p", vp));
-		xp->null_flags &= ~NULLV_NOUNLOCK;
+		    ("reclaimed cryptofs vnode %p", vp));
+		xp->crypto_flags &= ~CRYPTOV_NOUNLOCK;
 	}
 	vdrop(vp);
 }
 
-static struct vfsops null_vfsops = {
-	.vfs_extattrctl =	nullfs_extattrctl,
-	.vfs_fhtovp =		nullfs_fhtovp,
-	.vfs_init =		nullfs_init,
-	.vfs_mount =		nullfs_mount,
-	.vfs_quotactl =		nullfs_quotactl,
-	.vfs_root =		nullfs_root,
-	.vfs_statfs =		nullfs_statfs,
-	.vfs_sync =		nullfs_sync,
-	.vfs_uninit =		nullfs_uninit,
-	.vfs_unmount =		nullfs_unmount,
-	.vfs_vget =		nullfs_vget,
-	.vfs_reclaim_lowervp =	nullfs_reclaim_lowervp,
-	.vfs_unlink_lowervp =	nullfs_unlink_lowervp,
+static struct vfsops crypto_vfsops = {
+	.vfs_extattrctl =	cryptofs_extattrctl,
+	.vfs_fhtovp =		cryptofs_fhtovp,
+	.vfs_init =		cryptofs_init,
+	.vfs_mount =		cryptofs_mount,
+	.vfs_quotactl =		cryptofs_quotactl,
+	.vfs_root =		cryptofs_root,
+	.vfs_statfs =		cryptofs_statfs,
+	.vfs_sync =		cryptofs_sync,
+	.vfs_uninit =		cryptofs_uninit,
+	.vfs_unmount =		cryptofs_unmount,
+	.vfs_vget =		cryptofs_vget,
+	.vfs_reclaim_lowervp =	cryptofs_reclaim_lowervp,
+	.vfs_unlink_lowervp =	cryptofs_unlink_lowervp,
 };
 
-VFS_SET(null_vfsops, nullfs, VFCF_LOOPBACK | VFCF_JAIL);
+VFS_SET(crypto_vfsops, cryptofs, VFCF_LOOPBACK | VFCF_JAIL);
