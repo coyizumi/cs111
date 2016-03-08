@@ -83,7 +83,7 @@ cryptofs_mount(struct mount *mp)
 
 	CRYPTOFSDEBUG("cryptofs_mount(mp = %p)\n", (void *)mp);
 
-	if (!prison_allow(td->td_ucred, PR_ALLOW_MOUNT_CRYPTOFS))
+	if (!prison_allow(td->td_ucred, PR_ALLOW_MOUNT_NULLFS))
 		return (EPERM);
 	if (mp->mnt_flag & MNT_ROOTFS)
 		return (EOPNOTSUPP);
@@ -181,7 +181,7 @@ cryptofs_mount(struct mount *mp)
 	 */
 	VOP_UNLOCK(vp, 0);
 
-	if (CRYPTOVPTOLOWERVP(cryptom_rootvp)->v_mount->mnt_flag & MNT_LOCAL) {
+	if (NULLVPTOLOWERVP(cryptom_rootvp)->v_mount->mnt_flag & MNT_LOCAL) {
 		MNT_ILOCK(mp);
 		mp->mnt_flag |= MNT_LOCAL;
 		MNT_IUNLOCK(mp);
@@ -270,7 +270,7 @@ cryptofs_root(mp, flags, vpp)
 
 	CRYPTOFSDEBUG("cryptofs_root(mp = %p, vp = %p->%p)\n", (void *)mp,
 	    (void *)MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp,
-	    (void *)CRYPTOVPTOLOWERVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp));
+	    (void *)NULLVPTOLOWERVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp));
 
 	/*
 	 * Return locked reference to root.
@@ -304,7 +304,7 @@ cryptofs_statfs(mp, sbp)
 
 	CRYPTOFSDEBUG("cryptofs_statfs(mp = %p, vp = %p->%p)\n", (void *)mp,
 	    (void *)MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp,
-	    (void *)CRYPTOVPTOLOWERVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp));
+	    (void *)NULLVPTOLOWERVP(MOUNTTOCRYPTOMOUNT(mp)->cryptom_rootvp));
 
 	bzero(&mstat, sizeof(mstat));
 

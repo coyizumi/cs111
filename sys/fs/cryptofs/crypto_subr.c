@@ -127,7 +127,7 @@ crypto_hashget(mp, lowervp)
 		}
 	}
 	mtx_unlock(&crypto_hashmtx);
-	return (CRYPTOVP);
+	return (NULLVP);
 }
 
 /*
@@ -160,7 +160,7 @@ crypto_hashins(mp, xp)
 	}
 	LIST_INSERT_HEAD(hd, xp, crypto_hash);
 	mtx_unlock(&crypto_hashmtx);
-	return (CRYPTOVP);
+	return (NULLVP);
 }
 
 static void
@@ -302,7 +302,7 @@ crypto_checkvp(vp, fil, lno)
 		panic("crypto_checkvp");
 	}
 #endif
-	if (a->crypto_lowervp == CRYPTOVP) {
+	if (a->crypto_lowervp == NULLVP) {
 		/* Should never happen */
 		panic("crypto_checkvp %p", vp);
 	}

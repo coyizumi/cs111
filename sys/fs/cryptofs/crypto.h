@@ -72,9 +72,9 @@ int crypto_bypass(struct vop_generic_args *ap);
 
 #ifdef DIAGNOSTIC
 struct vnode *crypto_checkvp(struct vnode *vp, char *fil, int lno);
-#define	CRYPTOVPTOLOWERVP(vp) crypto_checkvp((vp), __FILE__, __LINE__)
+#define	NULLVPTOLOWERVP(vp) crypto_checkvp((vp), __FILE__, __LINE__)
 #else
-#define	CRYPTOVPTOLOWERVP(vp) (VTOCRYPTO(vp)->crypto_lowervp)
+#define	NULLVPTOLOWERVP(vp) (VTOCRYPTO(vp)->crypto_lowervp)
 #endif
 
 extern struct vop_vector crypto_vnodeops;

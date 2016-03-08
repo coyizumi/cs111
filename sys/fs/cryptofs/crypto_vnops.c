@@ -257,12 +257,12 @@ crypto_bypass(struct vop_generic_args *ap)
 		 * are of our type.  Check for and don't map any
 		 * that aren't.  (We must always map first vp or vclean fails.)
 		 */
-		if (i && (*this_vp_p == CRYPTOVP ||
+		if (i && (*this_vp_p == NULLVP ||
 		    (*this_vp_p)->v_op != &crypto_vnodeops)) {
-			old_vps[i] = CRYPTOVP;
+			old_vps[i] = NULLVP;
 		} else {
 			old_vps[i] = *this_vp_p;
-			*(vps_p[i]) = CRYPTOVPTOLOWERVP(*this_vp_p);
+			*(vps_p[i]) = NULLVPTOLOWERVP(*this_vp_p);
 			/*
 			 * XXX - Several operations have the side effect
 			 * of vrele'ing their vp's.  We must account for
@@ -338,7 +338,7 @@ crypto_add_writecount(struct vop_add_writecount_args *ap)
 	int error;
 
 	vp = ap->a_vp;
-	lvp = CRYPTOVPTOLOWERVP(vp);
+	lvp = NULLVPTOLOWERVP(vp);
 	KASSERT(vp->v_writecount + ap->a_inc >= 0, ("wrong writecount inc"));
 	if (vp->v_writecount > 0 && vp->v_writecount + ap->a_inc == 0)
 		error = VOP_ADD_WRITECOUNT(lvp, -1);
@@ -374,7 +374,7 @@ crypto_lookup(struct vop_lookup_args *ap)
 	 * Although it is possible to call crypto_bypass(), we'll do
 	 * a direct call to reduce overhead
 	 */
-	ldvp = CRYPTOVPTOLOWERVP(dvp);
+	ldvp = NULLVPTOLOWERVP(dvp);
 	vp = lvp = CRYPTO;
 	KASSERT((ldvp->v_vflag & VV_ROOT) == 0 ||
 	    ((dvp->v_vflag & VV_ROOT) != 0 && (flags & ISDOTDOT) == 0),
@@ -441,7 +441,7 @@ crypto_open(struct vop_open_args *ap)
 	struct vnode *vp, *ldvp;
 
 	vp = ap->a_vp;
-	ldvp = CRYPTOVPTOLOWERVP(vp);
+	ldvp = NULLVPTOLOWERVP(vp);
 	retval = crypto_bypass(&ap->a_gen);
 	if (retval == 0)
 		vp->v_object = ldvp->v_object;
@@ -573,7 +573,7 @@ crypto_remove(struct vop_remove_args *ap)
 	struct vnode *lvp;
 
 	if (vrefcnt(ap->a_vp) > 1) {
-		lvp = CRYPTOVPTOLOWERVP(ap->a_vp);
+		lvp = NULLVPTOLOWERVP(ap->a_vp);
 		VREF(lvp);
 		vreleit = 1;
 	} else
@@ -644,7 +644,7 @@ crypto_lock(struct vop_lock1_args *ap)
 	 * lock as ffs has special lock considerations in it's
 	 * vop lock.
 	 */
-	if (nn != CRYPTO && (lvp = CRYPTOVPTOLOWERVP(vp)) != CRYPTO) {
+	if (nn != CRYPTO && (lvp = NULLVPTOLOWERVP(vp)) != CRYPTO) {
 		VI_LOCK_FLAGS(lvp, MTX_DUPOK);
 		VI_UNLOCK(vp);
 		/*
@@ -713,7 +713,7 @@ crypto_unlock(struct vop_unlock_args *ap)
 		mtxlkflag = 2;
 	}
 	nn = VTOCRYPTO(vp);
-	if (nn != CRYPTO && (lvp = CRYPTOVPTOLOWERVP(vp)) != CRYPTO) {
+	if (nn != CRYPTO && (lvp = NULLVPTOLOWERVP(vp)) != CRYPTO) {
 		VI_LOCK_FLAGS(lvp, MTX_DUPOK);
 		flags |= LK_INTERLOCK;
 		vholdl(lvp);
@@ -746,7 +746,7 @@ crypto_inactive(struct vop_inactive_args *ap __unused)
 
 	vp = ap->a_vp;
 	xp = VTOCRYPTO(vp);
-	lvp = CRYPTOVPTOLOWERVP(vp);
+	lvp = NULLVPTOLOWERVP(vp);
 	mp = vp->v_mount;
 	xmp = MOUNTTOCRYPTOMOUNT(mp);
 	if ((xmp->cryptom_flags & CRYPTOM_CACHE) == 0 ||
@@ -849,7 +849,7 @@ crypto_vptofh(struct vop_vptofh_args *ap)
 {
 	struct vnode *lvp;
 
-	lvp = CRYPTOVPTOLOWERVP(ap->a_vp);
+	lvp = NULLVPTOLOWERVP(ap->a_vp);
 	return VOP_VPTOFH(lvp, ap->a_fhp);
 }
 
@@ -866,7 +866,7 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 		return (vop_stdvptocnp(ap));
 
 	locked = VOP_ISLOCKED(vp);
-	lvp = CRYPTOVPTOLOWERVP(vp);
+	lvp = NULLVPTOLOWERVP(vp);
 	vhold(lvp);
 	VOP_UNLOCK(vp, 0); /* vp is held by vn_vptocnp_locked that called us */
 	ldvp = lvp;
@@ -892,7 +892,7 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	error = crypto_nodeget(vp->v_mount, ldvp, dvp);
 	if (error == 0) {
 #ifdef DIAGNOSTIC
-		CRYPTOVPTOLOWERVP(*dvp);
+		NULLVPTOLOWERVP(*dvp);
 #endif
 		VOP_UNLOCK(*dvp, 0); /* keep reference on *dvp */
 	}
