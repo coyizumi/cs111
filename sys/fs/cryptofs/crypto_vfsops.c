@@ -65,7 +65,7 @@ static vfs_statfs_t	cryptofs_statfs;
 static vfs_unmount_t	cryptofs_unmount;
 static vfs_vget_t	cryptofs_vget;
 static vfs_extattrctl_t	cryptofs_extattrctl;
-
+#define CRYPTO NULL
 /*
  * Mount crypto layer
  */
@@ -95,7 +95,7 @@ cryptofs_mount(struct mount *mp)
 		/*
 		 * Only support update mounts for NFS export.
 		 */
-		if (vfs_flagopt(mp->mnt_optnew, "export", CRYPTO, 0))
+		if (vfs_flagopt(mp->mnt_optnew, "export", NULL, 0))
 			return (0);
 		else
 			return (EOPNOTSUPP);

@@ -75,7 +75,7 @@ cryptofs_init(vfsp)
 
 	crypto_node_hashtbl = hashinit(desiredvnodes, M_CRYPTOFSHASH,
 	    &crypto_hash_mask);
-	mtx_init(&crypto_hashmtx, "cryptohs", CRYPTO, MTX_DEF);
+	mtx_init(&crypto_hashmtx, "cryptohs", NULL, MTX_DEF);
 	return (0);
 }
 
@@ -167,9 +167,9 @@ static void
 crypto_destroy_proto(struct vnode *vp, void *xp)
 {
 
-	lockmgr(&vp->v_lock, LK_EXCLUSIVE, CRYPTO);
+	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	VI_LOCK(vp);
-	vp->v_data = CRYPTO;
+	vp->v_data = NULL;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_op = &dead_vnodeops;
 	VI_UNLOCK(vp);
@@ -209,7 +209,7 @@ crypto_nodeget(mp, lowervp, vpp)
 
 	/* Lookup the hash firstly. */
 	*vpp = crypto_hashget(mp, lowervp);
-	if (*vpp != CRYPTO) {
+	if (*vpp != NULL) {
 		vrele(lowervp);
 		return (0);
 	}
@@ -259,7 +259,7 @@ crypto_nodeget(mp, lowervp, vpp)
 	 * if someone else has beaten us to it.
 	 */
 	*vpp = crypto_hashins(mp, xp);
-	if (*vpp != CRYPTO) {
+	if (*vpp != NULL) {
 		vrele(lowervp);
 		crypto_destroy_proto(vp, xp);
 		return (0);

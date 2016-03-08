@@ -188,6 +188,8 @@
 #include <vm/vm_object.h>
 #include <vm/vnode_pager.h>
 
+#define CRYPTO NULL
+
 static int crypto_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 SYSCTL_INT(_debug, OID_AUTO, cryptofs_bug_bypass, CTLFLAG_RW, 
 	&crypto_bug_bypass, 0, "");
