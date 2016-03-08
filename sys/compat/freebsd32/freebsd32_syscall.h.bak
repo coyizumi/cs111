@@ -455,4 +455,5 @@
 #define	FREEBSD32_SYS_freebsd32_procctl	544
 #define	FREEBSD32_SYS_freebsd32_procctl	544
 #define	FREEBSD32_SYS_freebsd32_ppoll	545
-#define	FREEBSD32_SYS_MAXSYSCALL	546
+#define	FREEBSD32_SYS_setkey	546
+#define	FREEBSD32_SYS_MAXSYSCALL	547
