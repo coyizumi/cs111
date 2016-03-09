@@ -1070,4 +1070,3 @@
 				    u_int nfds, const struct timespec32 *ts, \
 				    const sigset_t *set); }
 
-546	AUE_NULL	STD	{ void setkey(unsigned int k0, unsigned int k1); }

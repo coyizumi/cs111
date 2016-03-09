@@ -699,6 +699,10 @@ struct freebsd32_ppoll_args {
 	char ts_l_[PADL_(const struct timespec32 *)]; const struct timespec32 * ts; char ts_r_[PADR_(const struct timespec32 *)];
 	char set_l_[PADL_(const sigset_t *)]; const sigset_t * set; char set_r_[PADR_(const sigset_t *)];
 };
+struct setkey_args {
+	char k0_l_[PADL_(unsigned int)]; unsigned int k0; char k0_r_[PADR_(unsigned int)];
+	char k1_l_[PADL_(unsigned int)]; unsigned int k1; char k1_r_[PADR_(unsigned int)];
+};
 #if !defined(PAD64_REQUIRED) && (defined(__powerpc__) || defined(__mips__))
 #define PAD64_REQUIRED
 #endif
@@ -833,6 +837,7 @@ int	freebsd32_procctl(struct thread *, struct freebsd32_procctl_args *);
 int	freebsd32_procctl(struct thread *, struct freebsd32_procctl_args *);
 #endif
 int	freebsd32_ppoll(struct thread *, struct freebsd32_ppoll_args *);
+int	sys_setkey(struct thread *, struct setkey_args *);
 
 #ifdef COMPAT_43
 
@@ -1250,6 +1255,7 @@ int	freebsd7_freebsd32_shmctl(struct thread *, struct freebsd7_freebsd32_shmctl_
 #define	FREEBSD32_SYS_AUE_freebsd32_procctl	AUE_NULL
 #define	FREEBSD32_SYS_AUE_freebsd32_procctl	AUE_NULL
 #define	FREEBSD32_SYS_AUE_freebsd32_ppoll	AUE_POLL
+#define	FREEBSD32_SYS_AUE_setkey	AUE_NULL
 
 #undef PAD_
 #undef PADL_
