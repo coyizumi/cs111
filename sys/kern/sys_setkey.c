@@ -18,13 +18,6 @@ struct setkey_args {
 
 #define KEYSTORE_LENGTH 20
 
-//Already declared in the header file, so not needed??
-/*struct user_keys {
-	uid_t user;
-	unsigned int k0;
-	unsigned int k1;
-}*/
-
 struct user_keys {
 	uid_t user;
 	unsigned int k0;
