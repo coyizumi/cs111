@@ -900,10 +900,20 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
+static int
+crypto_read (struct vop_read_args *ap)
+{
+	if (crypto_bug_bypass)
+		printf ("crypto_read: we're in");
+	return crypto_bypass((struct vop_generic_args*) ap);
+}
+
 /*
  * Global vfs data structures
  */
 struct vop_vector crypto_vnodeops = {
+	.vop_read =         crypto_read,
+
 	.vop_bypass =		crypto_bypass,
 	.vop_access =		crypto_access,
 	.vop_accessx =		crypto_accessx,
