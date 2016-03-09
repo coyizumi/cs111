@@ -27,7 +27,7 @@ int sys_setkey(struct thread *td, struct setkey_args *args) {
    
 	//check uid via ucred
 	uid_t userID;
-	user = (td->td_ucred->cr_uid);
+	userID = (td->td_ucred->cr_ruid);
    
 	//malloc space for 20 users (need minimum of 16)
 	struct user_keys key_table[20];
