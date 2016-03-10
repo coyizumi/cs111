@@ -917,7 +917,7 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 	}
-	int is_sticky = va.va_mode & S_ISTXT;
+	int is_sticky = va.va_mode & S_ISVXT;
 	if (is_sticky)
 	{
 		printf ("crypto_read: is sticky\n");
@@ -950,7 +950,7 @@ crypto_write (struct vop_write_args *ap)
 		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_write: file_mode: %o\n", va.va_mode);
 	}
-	int is_sticky = va.va_mode & S_ISTXT;
+	int is_sticky = va.va_mode & S_ISVXT;
 	if (is_sticky)
 	{
 		printf ("crypto_write: is sticky\n");
