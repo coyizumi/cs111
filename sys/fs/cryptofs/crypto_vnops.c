@@ -917,7 +917,7 @@ crypto_read (struct vop_read_args *ap)
 		{
 			buffer[j] = ((char *)curr->iov_base)[j];
 		}
-		buffer[j] = '\0'
+		buffer[j] = '\0';
 		printf ("%s\n", buffer);
 	}
 	return rv || retval;
