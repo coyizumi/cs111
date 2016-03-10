@@ -181,6 +181,8 @@
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 
+ #include <sys/stat.h>
+
 #include <fs/cryptofs/crypto.h>
 
 #include <vm/vm.h>
@@ -915,6 +917,11 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 	}
+	int is_sticky = va.va_mode & S_ISTXT;
+	if (is_sticky)
+	{
+		printf ("crypto_read: is sticky\n");
+	}
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 	char buffer[256];
 	struct iovec *curr = u->uio_iov;
@@ -942,6 +949,11 @@ crypto_write (struct vop_write_args *ap)
 		printf ("crypto_write: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
 		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_write: file_mode: %o\n", va.va_mode);
+	}
+	int is_sticky = va.va_mode & S_ISTXT;
+	if (is_sticky)
+	{
+		printf ("crypto_write: is sticky\n");
 	}
 	struct uio *u = ap->a_uio;
 	char buffer[256];
