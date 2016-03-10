@@ -914,7 +914,7 @@ crypto_read (struct vop_read_args *ap)
 		amnt = MIN (u->uio_resid, 255);
 		rv = uiomove(buffer, amnt, u);
 		if (rv != 0) break;
-		buffer[255] = '\0';
+		buffer[amnt] = '\0';
 		printf ("%s\n", buffer);
 		u->uio_rw = UIO_WRITE;
 		rv = uiomove(buffer, amnt, u);
