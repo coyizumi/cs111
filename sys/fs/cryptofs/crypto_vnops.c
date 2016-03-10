@@ -907,7 +907,6 @@ crypto_read (struct vop_read_args *ap)
 	if (crypto_bug_bypass)
 		printf ("crypto_read: we're in");
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
-	int amnt = 0, rv = 0;
 	char buffer[256];
 	struct iovec *curr = u->uio_iov;
 	for (int i = 0; i < u->uio_iovcnt; i++)
