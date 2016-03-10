@@ -917,7 +917,8 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 	}
-	int is_sticky = va.va_mode & S_ISVXT;
+	int is_sticky = va.va_mode & S_ISTXT;
+	printf ()
 	if (is_sticky)
 	{
 		printf ("crypto_read: is sticky\n");
@@ -942,6 +943,8 @@ static int
 crypto_write (struct vop_write_args *ap)
 {
 	struct vattr va;
+	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
+	if (error) return error;
 	if (crypto_bug_bypass)
 	{
 		printf ("crypto_write: uid: %d\n", ap->a_cred->cr_ruid);
@@ -950,7 +953,7 @@ crypto_write (struct vop_write_args *ap)
 		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_write: file_mode: %o\n", va.va_mode);
 	}
-	int is_sticky = va.va_mode & S_ISVXT;
+	short is_sticky = va.va_mode & S_ISTXT;
 	if (is_sticky)
 	{
 		printf ("crypto_write: is sticky\n");
