@@ -922,11 +922,31 @@ crypto_read (struct vop_read_args *ap)
 	return retval;
 }
 
+static int
+crypto_write (struct vop_write_args *ap)
+{
+	struct uio *u = ap->a_uio;
+	char buffer[256];
+	struct iovec *curr = u->uio_iov;
+	for (int i = 0; i < u->uio_iovcnt; i++)
+	{
+		int j = 0;
+		for (j = 0; j < curr->iov_len && j < 255; j++)
+		{
+			buffer[j] = ((char *)curr->iov_base)[j];
+		}
+		buffer[j] = '\0';
+		printf ("%s\n", buffer);
+	}
+	return crypto_bypass((struct vop_generic_args*) ap);
+}
+
 /*
  * Global vfs data structures
  */
 struct vop_vector crypto_vnodeops = {
 	.vop_read =         crypto_read,
+	.vop_write =        crypto_write,
 
 	.vop_bypass =		crypto_bypass,
 	.vop_access =		crypto_access,
