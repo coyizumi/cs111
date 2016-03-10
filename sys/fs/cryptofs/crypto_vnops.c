@@ -909,17 +909,16 @@ crypto_read (struct vop_read_args *ap)
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 	int amnt = 0, rv = 0;
 	char buffer[256];
-	while (u->uio_resid >0)
+	struct iovec *curr = u->uio_iov;
+	for (int i = 0; i < u->uio_iovcnt; i++)
 	{
-		amnt = MIN (u->uio_resid, 255);
-		rv = uiomove(buffer, amnt, u);
-		if (rv != 0) break;
-		buffer[amnt] = '\0';
+		int j = 0;
+		for (j = 0; j < curr->iov_len && j < 255; j++)
+		{
+			buffer[j] = ((char *)curr->iov_base)[j];
+		}
+		buffer[j] = '\0'
 		printf ("%s\n", buffer);
-		u->uio_rw = UIO_WRITE;
-		rv = uiomove(buffer, amnt, u);
-		if (rv != 0) break;
-		u->uio_rw = UIO_READ;
 	}
 	return rv || retval;
 }
