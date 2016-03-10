@@ -916,6 +916,10 @@ crypto_read (struct vop_read_args *ap)
 		if (rv != 0) break;
 		buffer[255] = '\0';
 		printf ("%s\n", buffer);
+		u->uio_rw = UIO_WRITE;
+		rv = uiomove(buffer, amnt, u);
+		if (rv != 0) break;
+		u->uio_rw = UIO_READ;
 	}
 	return rv || retval;
 }
