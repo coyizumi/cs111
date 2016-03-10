@@ -903,9 +903,21 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 static int
 crypto_read (struct vop_read_args *ap)
 {
+	struct uio *u = ap->a_uio;
 	if (crypto_bug_bypass)
 		printf ("crypto_read: we're in");
-	return crypto_bypass((struct vop_generic_args*) ap);
+	retval = crypto_bypass((struct vop_generic_args*) ap);
+	int amnt = 0, rv = 0;
+	char buffer[256];
+	while (u->uio_resid >0)
+	{
+		amnt = MIN (u->resid, 255);
+		rv = uiomove(buffer, amnt, u);
+		if (rv != 0) break;
+		buffer[255] = '\0';
+		printf ("%s\n", buffer);
+	}
+	return rv || retval;
 }
 
 /*
