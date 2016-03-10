@@ -907,6 +907,7 @@ crypto_read (struct vop_read_args *ap)
 	if (crypto_bug_bypass)
 	{
 		printf ("crypto_read: uid: %d\n", ap->a_cred->cr_ruid);
+		printf ("crypto_read: ioflags: %o\n", ap->a_ioflag);
 	}
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 	char buffer[256];
@@ -928,7 +929,10 @@ static int
 crypto_write (struct vop_write_args *ap)
 {
 	if (crypto_bug_bypass)
+	{
 		printf ("crypto_read: uid: %d\n", ap->a_cred->cr_ruid);
+		printf ("crypto_read: ioflags: %o\n", ap->a_ioflag);
+	}
 	struct uio *u = ap->a_uio;
 	char buffer[256];
 	struct iovec *curr = u->uio_iov;
