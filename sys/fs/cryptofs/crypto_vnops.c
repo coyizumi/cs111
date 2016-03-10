@@ -918,7 +918,6 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 	}
 	int is_sticky = va.va_mode & S_ISTXT;
-	printf ()
 	if (is_sticky)
 	{
 		printf ("crypto_read: is sticky\n");
