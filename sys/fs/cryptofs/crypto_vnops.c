@@ -919,7 +919,7 @@ crypto_read (struct vop_read_args *ap)
 		buffer[j] = '\0';
 		printf ("%s\n", buffer);
 	}
-	return rv || retval;
+	return retval;
 }
 
 /*
