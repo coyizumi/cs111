@@ -912,7 +912,7 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: uid: %d\n", ap->a_cred->cr_ruid);
 		printf ("crypto_read: ioflags: %o\n", ap->a_ioflag);
 		printf ("crypto_read: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
-		printf ("crypto_read: file_flags: %o\n", va.va_flags);
+		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 	}
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 	char buffer[256];
@@ -939,7 +939,7 @@ crypto_write (struct vop_write_args *ap)
 		printf ("crypto_write: uid: %d\n", ap->a_cred->cr_ruid);
 		printf ("crypto_write: ioflags: %o\n", ap->a_ioflag);
 		printf ("crypto_write: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
-		printf ("crypto_write: file_flags: %o\n", va.va_flags);
+		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 	}
 	struct uio *u = ap->a_uio;
 	char buffer[256];
