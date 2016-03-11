@@ -181,9 +181,10 @@
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 
- #include <sys/stat.h>
+#include <sys/stat.h>
 
 #include <fs/cryptofs/crypto.h>
+#include <fs/cryptofs/rijndael.h>
 
 #include <vm/vm.h>
 #include <vm/vm_extern.h>
@@ -193,6 +194,7 @@
 #include <sys/keys.h>
 
 #define CRYPTO NULL
+#define KEYBITS 128
 
 static int crypto_bug_bypass = 1;   /* for debugging: enables bypass printf'ing */
 SYSCTL_INT(_debug, OID_AUTO, cryptofs_bug_bypass, CTLFLAG_RW, 
@@ -919,7 +921,7 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
 		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
-		printf ("crypto_read: fileid: %ld\n", va.va_fileid);
+		printf ("crypto_read: fileid: %ld\n", va.va_fileid); //fileid is inode nr, given in stat
 	}
 	int is_sticky = va.va_mode & S_ISTXT;
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
@@ -930,19 +932,8 @@ crypto_read (struct vop_read_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
+			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
 		}
-	}
-	char buffer[256];
-	struct iovec *curr = u->uio_iov;
-	for (int i = 0; i < u->uio_iovcnt; i++)
-	{
-		int j = 0;
-		for (j = 0; j < curr->iov_len && j < 255; j++)
-		{
-			buffer[j] = ((char *)curr->iov_base)[j];
-		}
-		buffer[j] = '\0';
-		printf ("%s\n", buffer);
 	}
 	return retval;
 }
@@ -970,22 +961,67 @@ crypto_write (struct vop_write_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
+			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
 		}
-	}
-	struct uio *u = ap->a_uio;
-	char buffer[256];
-	struct iovec *curr = u->uio_iov;
-	for (int i = 0; i < u->uio_iovcnt; i++)
-	{
-		int j = 0;
-		for (j = 0; j < curr->iov_len && j < 255; j++)
-		{
-			buffer[j] = ((char *)curr->iov_base)[j];
-		}
-		buffer[j] = '\0';
-		printf ("%s\n", buffer);
 	}
 	return crypto_bypass((struct vop_generic_args*) ap);
+}
+
+void crypto_encrypt (uio *uio, int k0, int k1, long fileid)
+{
+	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
+  unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
+  int i, nbytes, nwritten , ctr;
+  int totalbytes;
+  int nrounds;				/* # of Rijndael rounds */
+  char *password;			/* supplied (ASCII) password */
+  unsigned char filedata[16];
+  unsigned char ciphertext[16];
+  unsigned char ctrvalue[16];
+
+  bzero (key, sizeof (key));;
+  bcopy (&k0, &(key[0]), sizeof (k0));
+  bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
+
+
+  /*
+   * Initialize the Rijndael algorithm.  The round key is initialized by this
+   * call from the values passed in key and KEYBITS.
+   */
+  nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
+
+  /* fileID goes into bytes 8-11 of the ctrvalue */
+  bcopy (&fileId, &(ctrvalue[8]), sizeof (fileId));
+
+  /* This loop reads 16 bytes from the file, XORs it with the encrypted
+     CTR value, and then writes it back to the file at the same position.
+     Note that CTR encryption is nice because the same algorithm does
+     encryption and decryption.  In other words, if you run this program
+     twice, it will first encrypt and then decrypt the file.
+  */
+  int iovec_num = 0, iovec_ind = 0;
+  for (ctr = 0, totalbytes = 0; iovec_num < uio->uio_iovcnt; ctr++)
+  {
+    /* Set up the CTR value to be encrypted */
+    bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
+
+    /* Call the encryption routine to encrypt the CTR value */
+    rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
+
+    /* XOR the result into the file data */
+    iovec_curr = uio->uio_iov[iovec_num];
+    for (i = 0; i < KEYBITS; i++) {
+      uio->uio_iov[iovec_num]->iov_base[iovec_ind++] ^= ciphertext[i];
+      if (iovec_ind >= uio->uio_iov[iovec_num]->iov_len)
+      {
+      	iovec_num++;
+      	iovec_ind = 0;
+      	if (iovec_num >= uio->uio_iovcnt)
+      		return;
+      }
+    }
+  }
+
 }
 
 /*
