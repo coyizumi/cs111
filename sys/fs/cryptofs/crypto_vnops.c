@@ -1003,10 +1003,10 @@ crypto_read (struct vop_read_args *ap)
 
 	int is_sticky = va.va_mode & S_ISTXT;
 
-	struct iovec *curr = ap->a_uio->uio_iov;
-	char *buff[curr->iov_len];
-	void *saved_pnt = curr->iov_base;
-	curr->iov_base = (void *)buff;
+	struct iovec *curr1 = ap->a_uio->uio_iov;
+	char *buff[curr1->iov_len];
+	void *saved_pnt = curr1->iov_base;
+	curr1->iov_base = (void *)buff;
 
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 
