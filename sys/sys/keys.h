@@ -8,6 +8,8 @@ struct user_keys {
 	uid_t user;
 	unsigned int k0;
 	unsigned int k1;
-}
+};
+
+typedef struct user_keys user;
 
 #endif
