@@ -40,6 +40,10 @@ int sys_setkey(struct thread *td, struct setkey_args *args) {
 	key_table->k1 = args->k1;
    
 	printf("uid: %d\n", userID);
+        for (int i = 0; i < 20; i++) {
+		printf("UserID: %d, k0: %d, k1: %d\n", 
+			key_table[i].user, key_table[i].k0, key_table[i].k1);
+        }
 	return 0;
 }
 
