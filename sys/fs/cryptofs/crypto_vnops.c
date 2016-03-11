@@ -1000,7 +1000,7 @@ crypto_read (struct vop_read_args *ap)
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 
 	char buffer[256];
-	uio *u = ap->a_uio;
+	struct uio *u = ap->a_uio;
 	struct iovec *curr = u->uio_iov;
 	for (int i = 0; i < u->uio_iovcnt; i++)
 	{
