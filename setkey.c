@@ -42,8 +42,12 @@ int parse_hex_str(char *str, hexvalue *result)
 int main(int argc, char **argv) {
    //Declaaring k0 and k1
    //Creates the struct to hold k0, and k1
+   if (argc != 2) {
+      printf("Please have only one argument -- The 16 digit hex\n");
+      return 1;
+   }
    struct hexvalue hex;
-   parse_hex_str(argv[optind++],&hex);
+   parse_hex_str(argv[1],&hex);
    return 0;
 }
 
