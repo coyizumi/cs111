@@ -919,6 +919,17 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
   bcopy (&k0, &(key[0]), sizeof (k0));
   bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
 
+  int a,b;
+  printf ("cyrpto_encrypt: IN\n");
+  for (a = 0; a < uio->uio_iovcnt; a++)
+  {
+  	for (b=0; b < uio->uio_iov[a].iov_len; b++)
+  	{
+  		char c = ((char*)(uio->uio_iov[a].iov_base))[b]
+  		printf("%c", c);
+  	}
+  }
+
 
   /*
    * Initialize the Rijndael algorithm.  The round key is initialized by this
@@ -955,6 +966,15 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
       	}
       ((char*)(uio->uio_iov[iovec_num].iov_base))[iovec_ind++] ^= ciphertext[i];
     }
+  }
+  printf ("cyrpto_encrypt: OUT\n");
+  for (a = 0; a < uio->uio_iovcnt; a++)
+  {
+  	for (b=0; b < uio->uio_iov[a].iov_len; b++)
+  	{
+  		char c = ((char*)(uio->uio_iov[a].iov_base))[b]
+  		printf("%c", c);
+  	}
   }
 
 }
