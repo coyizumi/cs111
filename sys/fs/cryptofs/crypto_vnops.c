@@ -184,7 +184,7 @@
 #include <sys/stat.h>
 
 #include <fs/cryptofs/crypto.h>
-#include "rijndael.h"
+#include <fs/cryptofs/rijndael.h>
 
 #include <vm/vm.h>
 #include <vm/vm_extern.h>
