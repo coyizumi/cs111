@@ -950,6 +950,7 @@ static int
 crypto_write (struct vop_write_args *ap)
 {
 	struct vattr va;
+	uid_t uid = ap->a_cred->cr_ruid;
 	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
 	if (error) return error;
 	if (crypto_bug_bypass)
