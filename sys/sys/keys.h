@@ -6,6 +6,7 @@
 
 struct user_keys {
 	uid_t user;
+	unsigned int user_count;
 	unsigned int k0;
 	unsigned int k1;
 };
