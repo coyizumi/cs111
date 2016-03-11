@@ -6,7 +6,7 @@
 
 #include <sys/proc.h>
 #include <sys/ucred.h>
-#include "keys.h"
+#include <sys/keys.h>
 
 //struct declarations
 #ifndef _SYS_SYSPROTO_H_
@@ -39,7 +39,7 @@ int sys_setkey(struct thread *td, struct setkey_args *args) {
 	key_table->k0 = args->k0;
 	key_table->k1 = args->k1;
    
-	printf("Hello World\n");
+	printf("uid: %d\n", userID);
 	return 0;
 }
 

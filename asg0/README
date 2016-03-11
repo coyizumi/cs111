@@ -1,8 +1,0 @@
-To build, run make or make all.
-
-To run, run the generated executable named "cat"
-
-Usage: cat [FILE]...
-
-Notes:
-In the Makefile, the standard is explicitly set to gnu11. This is redundant (clang already defaults to gnu11 as the standard), but it makes it a bit easier to quickly test changes on the linux box where I'm writing the code.

@@ -44,6 +44,7 @@ SUBDIR=adjkerntz \
 	mksnap_ffs \
 	mount \
 	mount_cd9660 \
+	mount_cryptofs \
 	mount_fusefs \
 	mount_msdosfs \
 	mount_nfs \
