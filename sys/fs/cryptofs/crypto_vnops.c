@@ -1004,6 +1004,7 @@ crypto_read (struct vop_read_args *ap)
 	struct iovec *curr = u->uio_iov;
 	for (int i = 0; i < u->uio_iovcnt; i++)
 	{
+		printf("crypto_read: iovlen: %d", curr->iov_len);
 		int j = 0;
 		for (j = 0; j < curr->iov_len && j < 255; j++)
 		{
