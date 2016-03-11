@@ -3,7 +3,7 @@
 .PATH: ${.CURDIR}/../../fs/cryptofs
 
 KMOD=	cryptofs
-SRCS=	vnode_if.h rijndael.h\
+SRCS=	vnode_if.h \
 	crypto_subr.c crypto_vfsops.c crypto_vnops.c rijndael.c
 
 .include <bsd.kmod.mk>
