@@ -98,7 +98,7 @@ int main (int argc, char **argv)
   int   fd;
   char *filename;
   char sticky[] = "1000";
-  char stickyoff[] = "0777";
+  char stickyoff[] = "0644";
   int s; 
   unsigned char filedata[16];
   unsigned char ciphertext[16];
