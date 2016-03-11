@@ -906,25 +906,102 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
+static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long length)
+{
+	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
+  	unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
+  	int i, ctr;
+  	int nrounds;				/* # of Rijndael rounds */
+  	unsigned char ciphertext[16];
+  	unsigned char ctrvalue[16];
+  	int num_written = 0;
+
+  	bzero (key, sizeof (key));;
+  	bcopy (&k0, &(key[0]), sizeof (k0));
+  	bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
+
+  	printf ("cyrpto_encrypt: IN ; size: %ld\n", length);
+
+  	// Move base back by offset so we can actually read the data!
+  	char *iov_base = (char*)(uio->uio_iov->iov_base) - uio->uio_offset;
+  	uio->uio_iov->iov_base = iov_base;
+
+  	/*
+   	* Initialize the Rijndael algorithm.  The round key is initialized by this
+   	* call from the values passed in key and KEYBITS.
+   	*/
+  	nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
+
+  	/* fileID goes into bytes 8-11 of the ctrvalue */
+  	bcopy (&fileid, &(ctrvalue[8]), sizeof (fileid));
+
+  	/* This loop reads 16 bytes from the file, XORs it with the encrypted
+    	CTR value, and then writes it back to the file at the same position.
+     	Note that CTR encryption is nice because the same algorithm does
+     	encryption and decryption.  In other words, if you run this program
+     	twice, it will first encrypt and then decrypt the file.
+  	*/
+  	int iovec_num = 0, iovec_ind = 0;
+  	for (ctr = 0; iovec_num < uio->uio_iovcnt; ctr++)
+  	{
+    	/* Set up the CTR value to be encrypted */
+    	bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
+
+    	/* Call the encryption routine to encrypt the CTR value */
+    	rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
+
+    	/* XOR the result into the file data */
+    	for (i = 0; i < KEYBITS; i++) 
+    	{
+    		// Move on to next iovec or quit if we're done
+    		if (iovec_ind >= uio->uio_iov[iovec_num].iov_len)
+      		{
+      			iovec_num++;
+      			iovec_ind = 0;
+      			if (iovec_num >= uio->uio_iovcnt)
+      				return;
+      		}
+      		// If we've written all we've planned to, get out
+      		if (num_written >= length) return;
+      		char *c = (((char*)(uio->uio_iov[iovec_num].iov_base)) + iovec_ind++);
+        	*c ^= ciphertext[i];
+      		num_written++;
+    	}
+  	}
+}
+
 static int
 crypto_read (struct vop_read_args *ap)
 {
-	struct uio *u = ap->a_uio;
 	struct vattr va;
 	uid_t uid = ap->a_cred->cr_ruid;
+	printf ("crypto_read:: %ld\n", ap->a_uio->uio_iov->iov_len);
 	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
 	if (error) return error;
 	if (crypto_bug_bypass)
 	{
 		printf ("crypto_read: uid: %d\n", ap->a_cred->cr_ruid);
-		printf ("crypto_read: ioflags: %o\n", ap->a_ioflag);
-		printf ("crypto_read: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
-		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 		printf ("crypto_read: fileid: %ld\n", va.va_fileid); //fileid is inode nr, given in stat
 	}
+
+	// Store uio attributes for later
+	// Replace buffer with our own buffer
+	struct uio *u = ap->a_uio;
+	char buff[u->uio_resid];
+	void *old_base = u->uio_iov->iov_base;
+	int old_flag = u->uio_segflg;
+	u->uio_iov->iov_base = buff;
+	u->uio_segflg = UIO_SYSSPACE;
+
 	int is_sticky = va.va_mode & S_ISTXT;
+
+	long resid = u->uio_resid;
+
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
+	if (retval) return retval;
+	long resid_diff = resid - u->uio_resid;
+
 	if (is_sticky)
 	{
 		printf ("Is sticky\n");
@@ -932,9 +1009,19 @@ crypto_read (struct vop_read_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
-			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
+			crypto_encrypt (u, k0, k1, va.va_fileid, resid_diff);
 		}
+		else
+			return EPERM;
 	}
+	
+	// Restore uio attributes
+	u->uio_resid = resid;
+	u->uio_iov->iov_base = old_base;
+	u->uio_resid = sizeof (buff);
+	u->uio_segflg = old_flag;
+	uiomove (buff, resid_diff, u);
+
 	return retval;
 }
 
@@ -948,11 +1035,9 @@ crypto_write (struct vop_write_args *ap)
 	if (crypto_bug_bypass)
 	{
 		printf ("crypto_write: uid: %d\n", ap->a_cred->cr_ruid);
-		printf ("crypto_write: ioflags: %o\n", ap->a_ioflag);
-		printf ("crypto_write: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
-		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_write: file_mode: %o\n", va.va_mode);
 	}
+
 	short is_sticky = va.va_mode & S_ISTXT;
 	if (is_sticky)
 	{
@@ -961,68 +1046,15 @@ crypto_write (struct vop_write_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
-			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
+			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid, ap->a_uio->uio_resid);
 		}
+		else
+			return EPERM;
 	}
 	return crypto_bypass((struct vop_generic_args*) ap);
 }
 
-void crypto_encrypt (uio *uio, int k0, int k1, long fileid)
-{
-	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
-  unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
-  int i, nbytes, nwritten , ctr;
-  int totalbytes;
-  int nrounds;				/* # of Rijndael rounds */
-  char *password;			/* supplied (ASCII) password */
-  unsigned char filedata[16];
-  unsigned char ciphertext[16];
-  unsigned char ctrvalue[16];
 
-  bzero (key, sizeof (key));;
-  bcopy (&k0, &(key[0]), sizeof (k0));
-  bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
-
-
-  /*
-   * Initialize the Rijndael algorithm.  The round key is initialized by this
-   * call from the values passed in key and KEYBITS.
-   */
-  nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
-
-  /* fileID goes into bytes 8-11 of the ctrvalue */
-  bcopy (&fileId, &(ctrvalue[8]), sizeof (fileId));
-
-  /* This loop reads 16 bytes from the file, XORs it with the encrypted
-     CTR value, and then writes it back to the file at the same position.
-     Note that CTR encryption is nice because the same algorithm does
-     encryption and decryption.  In other words, if you run this program
-     twice, it will first encrypt and then decrypt the file.
-  */
-  int iovec_num = 0, iovec_ind = 0;
-  for (ctr = 0, totalbytes = 0; iovec_num < uio->uio_iovcnt; ctr++)
-  {
-    /* Set up the CTR value to be encrypted */
-    bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
-
-    /* Call the encryption routine to encrypt the CTR value */
-    rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
-
-    /* XOR the result into the file data */
-    iovec_curr = uio->uio_iov[iovec_num];
-    for (i = 0; i < KEYBITS; i++) {
-      uio->uio_iov[iovec_num]->iov_base[iovec_ind++] ^= ciphertext[i];
-      if (iovec_ind >= uio->uio_iov[iovec_num]->iov_len)
-      {
-      	iovec_num++;
-      	iovec_ind = 0;
-      	if (iovec_num >= uio->uio_iovcnt)
-      		return;
-      }
-    }
-  }
-
-}
 
 /*
  * Global vfs data structures
