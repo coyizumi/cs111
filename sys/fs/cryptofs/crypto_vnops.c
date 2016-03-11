@@ -1007,11 +1007,11 @@ crypto_read (struct vop_read_args *ap)
 
 	int is_sticky = va.va_mode & S_ISTXT;
 
-	printf ("crypto_read: resid: %ld", u->uio_resid);
+	printf ("crypto_read: residb: %ld", u->uio_resid);
 
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 
-	printf ("crypto_read: resid: %ld\n", ap->a_uio->uio_resid);
+	printf ("crypto_read: resida: %ld\n", ap->a_uio->uio_resid);
 
 	if (is_sticky)
 	{
