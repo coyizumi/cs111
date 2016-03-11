@@ -906,15 +906,12 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
-void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
+static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
 {
 	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
-  int i, nbytes, nwritten , ctr;
-  int totalbytes;
+  int i, ctr;
   int nrounds;				/* # of Rijndael rounds */
-  char *password;			/* supplied (ASCII) password */
-  unsigned char filedata[16];
   unsigned char ciphertext[16];
   unsigned char ctrvalue[16];
 
@@ -939,7 +936,7 @@ void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
      twice, it will first encrypt and then decrypt the file.
   */
   int iovec_num = 0, iovec_ind = 0;
-  for (ctr = 0, totalbytes = 0; iovec_num < uio->uio_iovcnt; ctr++)
+  for (ctr = 0; iovec_num < uio->uio_iovcnt; ctr++)
   {
     /* Set up the CTR value to be encrypted */
     bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
