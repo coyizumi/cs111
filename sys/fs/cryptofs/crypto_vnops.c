@@ -997,6 +997,9 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: fileid: %ld\n", va.va_fileid); //fileid is inode nr, given in stat
 	}
 
+	char buffer[256];
+	struct uio *u = ap->a_uio;
+	struct iovec *curr = u->uio_iov;
 	for (int i = 0; i < u->uio_iovcnt; i++)
 	{
 		printf("crypto_read: iovlen: %ld", curr->iov_len);
@@ -1009,13 +1012,11 @@ crypto_read (struct vop_read_args *ap)
 		printf ("%s\n", buffer);
 	}
 
-	
+
 	int is_sticky = va.va_mode & S_ISTXT;
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 
-	char buffer[256];
-	struct uio *u = ap->a_uio;
-	struct iovec *curr = u->uio_iov;
+	
 	
 
 	if (is_sticky)
