@@ -998,34 +998,11 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: fileid: %ld\n", va.va_fileid); //fileid is inode nr, given in stat
 	}
 
-	
-
-
 	int is_sticky = va.va_mode & S_ISTXT;
-
-	struct iovec *curr1 = ap->a_uio->uio_iov;
-	char *buff[curr1->iov_len];
-	void *saved_pnt = curr1->iov_base;
-	curr1->iov_base = (void *)buff;
 
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 
-	char buffer[256];
-	struct uio *u = ap->a_uio;
-	struct iovec *curr = u->uio_iov;
-	for (int i = 0; i < u->uio_iovcnt; i++)
-	{
-		printf("crypto_read: iovlen: %ld", curr->iov_len);
-		int j = 0;
-		for (j = 0; j < curr->iov_len && j < 255; j++)
-		{
-			buffer[j] = ((char *)curr->iov_base)[j];
-			((char*)curr->iov_base)[j] = 0;
-		}
-		buffer[j] = '\0';
-		printf ("%s\n", buffer);
-	}
-	
+	printf ("crypto_read: resid: %ld\n", ap->a_uio->uio_resid);
 
 	if (is_sticky)
 	{
@@ -1034,7 +1011,7 @@ crypto_read (struct vop_read_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
-			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
+			// crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
 		}
 	}
 	curr1->iov_base=saved_pnt;
