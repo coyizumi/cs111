@@ -190,6 +190,8 @@
 #include <vm/vm_object.h>
 #include <vm/vnode_pager.h>
 
+#include <sys/keys.h>
+
 #define CRYPTO NULL
 
 static int crypto_bug_bypass = 1;   /* for debugging: enables bypass printf'ing */
@@ -907,6 +909,7 @@ crypto_read (struct vop_read_args *ap)
 {
 	struct uio *u = ap->a_uio;
 	struct vattr va;
+	uid_t uid = ap->a_cred->cr_ruid;
 	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
 	if (error) return error;
 	if (crypto_bug_bypass)
@@ -918,11 +921,16 @@ crypto_read (struct vop_read_args *ap)
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 	}
 	int is_sticky = va.va_mode & S_ISTXT;
+	int retval = crypto_bypass((struct vop_generic_args*) ap);
 	if (is_sticky)
 	{
-		printf ("crypto_read: is sticky\n");
+		printf ("Is sticky\n");
+		int k0,k1;
+		if (get_keys_by_uid(uid, &k0, &k1))
+		{
+			printf ("Keys are: %d %d\n", k0, k1);
+		}
 	}
-	int retval = crypto_bypass((struct vop_generic_args*) ap);
 	char buffer[256];
 	struct iovec *curr = u->uio_iov;
 	for (int i = 0; i < u->uio_iovcnt; i++)
@@ -955,7 +963,12 @@ crypto_write (struct vop_write_args *ap)
 	short is_sticky = va.va_mode & S_ISTXT;
 	if (is_sticky)
 	{
-		printf ("crypto_write: is sticky\n");
+		printf ("Is sticky\n");
+		int k0,k1;
+		if (get_keys_by_uid(uid, &k0, &k1))
+		{
+			printf ("Keys are: %d %d\n", k0, k1);
+		}
 	}
 	struct uio *u = ap->a_uio;
 	char buffer[256];
