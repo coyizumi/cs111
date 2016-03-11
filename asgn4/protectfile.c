@@ -105,6 +105,8 @@ int main (int argc, char **argv)
   unsigned char ctrvalue[16];
 
 
+
+
   bzero (key, sizeof (key));
   k0 = args.k0;
   k1 = args.k1;
@@ -117,6 +119,15 @@ int main (int argc, char **argv)
     sprintf (buf+2*i, "%02x", key[sizeof(key)-i-1]);
   }
   fprintf (stderr, "KEY: %s\n", buf);
+
+    struct stat sb;
+    stat (filename, &sb);
+    int mode = sb.st_mode;
+    fileId = sb.st_ino;
+
+    // Clear sticky bit
+    mode &= ~I_ISTXT;
+    chmod (filename, mode);
 
   /*
    * Initialize the Rijndael algorithm.  The round key is initialized by this
@@ -133,10 +144,6 @@ int main (int argc, char **argv)
     fprintf(stderr, "Error opening file %s\n", argv[2]);
     return 1;
   }
-  
-  /* Turns off sticky bit */
-  s = strtol(stickyoff, 0, 8);
-  chmod(filename, s);
 
   /* fileID goes into bytes 8-11 of the ctrvalue */
   bcopy (&fileId, &(ctrvalue[8]), sizeof (fileId));
@@ -181,19 +188,16 @@ int main (int argc, char **argv)
       break;
     }
 
-    /*Depending on the MODE -- Sticky Bit*/
-
-    if (args.mode == ENCRYPT) {
-      s = strtol(sticky, 0, 8);
-      chmod(filename, s);        
-    } else if (args.mode == DECRYPT) {
-      s = strtol(stickyoff, 0, 8);
-      chmod(filename, s);
-    }
-
     /* Increment the total bytes written */
     totalbytes += nbytes;
   }
   close (fd);
+  // Set sticky bit
+  if (args.mode == ENCRYPT)
+  {
+      mode |= I_ISTXT;
+      chmod (filename, mode);
+  }
+  
 }
 
