@@ -1042,6 +1042,22 @@ crypto_write (struct vop_write_args *ap)
 		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_write: file_mode: %o\n", va.va_mode);
 	}
+
+	char buffer[256];
+	struct uio *u = ap->a_uio;
+	struct iovec *curr = u->uio_iov;
+	for (int i = 0; i < u->uio_iovcnt; i++)
+	{
+		printf("crypto_read: iovlen: %ld", curr->iov_len);
+		int j = 0;
+		for (j = 0; j < curr->iov_len && j < 255; j++)
+		{
+			buffer[j] = ((char *)curr->iov_base)[j];
+		}
+		buffer[j] = '\0';
+		printf ("%s\n", buffer);
+	}
+
 	short is_sticky = va.va_mode & S_ISTXT;
 	if (is_sticky)
 	{
