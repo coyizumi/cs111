@@ -956,7 +956,7 @@ void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
       		if (iovec_num >= uio->uio_iovcnt)
       			return;
       	}
-      uio->uio_iov[iovec_num].iov_base[iovec_ind++] ^= ciphertext[i];
+      ((char*)(uio->uio_iov[iovec_num].iov_base))[iovec_ind++] ^= ciphertext[i];
     }
   }
 
