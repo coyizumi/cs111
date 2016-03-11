@@ -906,10 +906,65 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
+void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
+{
+	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
+  unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
+  int i, nbytes, nwritten , ctr;
+  int totalbytes;
+  int nrounds;				/* # of Rijndael rounds */
+  char *password;			/* supplied (ASCII) password */
+  unsigned char filedata[16];
+  unsigned char ciphertext[16];
+  unsigned char ctrvalue[16];
+
+  bzero (key, sizeof (key));;
+  bcopy (&k0, &(key[0]), sizeof (k0));
+  bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
+
+
+  /*
+   * Initialize the Rijndael algorithm.  The round key is initialized by this
+   * call from the values passed in key and KEYBITS.
+   */
+  nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
+
+  /* fileID goes into bytes 8-11 of the ctrvalue */
+  bcopy (&fileid, &(ctrvalue[8]), sizeof (fileid));
+
+  /* This loop reads 16 bytes from the file, XORs it with the encrypted
+     CTR value, and then writes it back to the file at the same position.
+     Note that CTR encryption is nice because the same algorithm does
+     encryption and decryption.  In other words, if you run this program
+     twice, it will first encrypt and then decrypt the file.
+  */
+  int iovec_num = 0, iovec_ind = 0;
+  for (ctr = 0, totalbytes = 0; iovec_num < uio->uio_iovcnt; ctr++)
+  {
+    /* Set up the CTR value to be encrypted */
+    bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
+
+    /* Call the encryption routine to encrypt the CTR value */
+    rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
+
+    /* XOR the result into the file data */
+    for (i = 0; i < KEYBITS; i++) {
+    	if (iovec_ind >= uio->uio_iov[iovec_num].iov_len)
+      	{
+      		iovec_num++;
+      		iovec_ind = 0;
+      		if (iovec_num >= uio->uio_iovcnt)
+      			return;
+      	}
+      uio->uio_iov[iovec_num].iov_base[iovec_ind++] ^= ciphertext[i];
+    }
+  }
+
+}
+
 static int
 crypto_read (struct vop_read_args *ap)
 {
-	struct uio *u = ap->a_uio;
 	struct vattr va;
 	uid_t uid = ap->a_cred->cr_ruid;
 	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
@@ -967,62 +1022,7 @@ crypto_write (struct vop_write_args *ap)
 	return crypto_bypass((struct vop_generic_args*) ap);
 }
 
-void crypto_encrypt (uio *uio, int k0, int k1, long fileid)
-{
-	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
-  unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
-  int i, nbytes, nwritten , ctr;
-  int totalbytes;
-  int nrounds;				/* # of Rijndael rounds */
-  char *password;			/* supplied (ASCII) password */
-  unsigned char filedata[16];
-  unsigned char ciphertext[16];
-  unsigned char ctrvalue[16];
 
-  bzero (key, sizeof (key));;
-  bcopy (&k0, &(key[0]), sizeof (k0));
-  bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
-
-
-  /*
-   * Initialize the Rijndael algorithm.  The round key is initialized by this
-   * call from the values passed in key and KEYBITS.
-   */
-  nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
-
-  /* fileID goes into bytes 8-11 of the ctrvalue */
-  bcopy (&fileId, &(ctrvalue[8]), sizeof (fileId));
-
-  /* This loop reads 16 bytes from the file, XORs it with the encrypted
-     CTR value, and then writes it back to the file at the same position.
-     Note that CTR encryption is nice because the same algorithm does
-     encryption and decryption.  In other words, if you run this program
-     twice, it will first encrypt and then decrypt the file.
-  */
-  int iovec_num = 0, iovec_ind = 0;
-  for (ctr = 0, totalbytes = 0; iovec_num < uio->uio_iovcnt; ctr++)
-  {
-    /* Set up the CTR value to be encrypted */
-    bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
-
-    /* Call the encryption routine to encrypt the CTR value */
-    rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
-
-    /* XOR the result into the file data */
-    iovec_curr = uio->uio_iov[iovec_num];
-    for (i = 0; i < KEYBITS; i++) {
-      uio->uio_iov[iovec_num]->iov_base[iovec_ind++] ^= ciphertext[i];
-      if (iovec_ind >= uio->uio_iov[iovec_num]->iov_len)
-      {
-      	iovec_num++;
-      	iovec_ind = 0;
-      	if (iovec_num >= uio->uio_iovcnt)
-      		return;
-      }
-    }
-  }
-
-}
 
 /*
  * Global vfs data structures
