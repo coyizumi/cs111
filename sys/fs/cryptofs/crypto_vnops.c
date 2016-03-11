@@ -1022,6 +1022,7 @@ crypto_read (struct vop_read_args *ap)
 		}
 	}
 	u->uio_iov->iov_base = old_base;
+	u->uio_resid = sizeof (buff);
 	u->uio_segflg = old_flag;
 	uiomove (buff, sizeof(buff), u);
 
