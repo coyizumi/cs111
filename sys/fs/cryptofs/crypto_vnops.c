@@ -1014,6 +1014,7 @@ crypto_read (struct vop_read_args *ap)
 		for (j = 0; j < curr->iov_len && j < 255; j++)
 		{
 			buffer[j] = ((char *)curr->iov_base)[j];
+			((char*)curr->iov_base)[j] = 0;
 		}
 		buffer[j] = '\0';
 		printf ("%s\n", buffer);
