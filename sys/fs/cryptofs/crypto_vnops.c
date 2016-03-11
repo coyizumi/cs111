@@ -925,7 +925,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
   {
   	for (b=0; b < uio->uio_iov[a].iov_len; b++)
   	{
-  		char c = ((char*)(uio->uio_iov[a].iov_base))[b]
+  		char c = ((char*)(uio->uio_iov[a].iov_base))[b];
   		printf("%c", c);
   	}
   }
@@ -972,7 +972,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
   {
   	for (b=0; b < uio->uio_iov[a].iov_len; b++)
   	{
-  		char c = ((char*)(uio->uio_iov[a].iov_base))[b]
+  		char c = ((char*)(uio->uio_iov[a].iov_base))[b];
   		printf("%c", c);
   	}
   }
