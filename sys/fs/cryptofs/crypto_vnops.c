@@ -923,7 +923,11 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
   	printf ("cyrpto_encrypt: IN ; size: %ld\n", length);
 
   	// Move base back by offset so we can actually read the data!
-  	char *iov_base = (char*)(uio->uio_iov->iov_base) - uio->uio_offset;
+  	int remaining_offset = uio->uio_offset;
+  	int offset = MIN(remaining_offset, uio->uio_iov->iov_len);
+  	char *iov_base = (char*)(uio->uio_iov->iov_base);
+  	iov_base -= offset;
+  	remaining_offset -= offset;
   	uio->uio_iov->iov_base = iov_base;
 
   	/*
@@ -958,6 +962,11 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
       		{
       			iovec_num++;
       			iovec_ind = 0;
+      			*iov_base = (char*)(uio->uio_iov[iovec_num].iov_base);
+      			offset = MIN(remaining_offset, uio->uio_iov[iovec_num].iov_len);
+      			iov_base -= offset;
+      			remaining_offset -= offset;
+      			uio->uio_iov[iovec_num].iov_base = iov_base;
       			if (iovec_num >= uio->uio_iovcnt)
       				return;
       		}
