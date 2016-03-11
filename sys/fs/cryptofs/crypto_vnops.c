@@ -998,6 +998,21 @@ crypto_read (struct vop_read_args *ap)
 	}
 	int is_sticky = va.va_mode & S_ISTXT;
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
+
+	char buffer[256];
+	uio *u = ap->a_uio;
+	struct iovec *curr = u->uio_iov;
+	for (int i = 0; i < u->uio_iovcnt; i++)
+	{
+		int j = 0;
+		for (j = 0; j < curr->iov_len && j < 255; j++)
+		{
+			buffer[j] = ((char *)curr->iov_base)[j];
+		}
+		buffer[j] = '\0';
+		printf ("%s\n", buffer);
+	}
+
 	if (is_sticky)
 	{
 		printf ("Is sticky\n");
