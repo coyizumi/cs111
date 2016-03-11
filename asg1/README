@@ -1,0 +1,12 @@
+In lex.l, the return type of yylex is changed to a char** using the macro
+YY_DECL. The existence of this macro was discovered while reading the flex
+documentation.
+http://flex.sourceforge.net/manual/What-is-the-difference-between-YYLEX_005fPARAM-and-YY_005fDECL_003f.html#What-is-the-difference-between-YYLEX_005fPARAM-and-YY_005fDECL_003f
+
+The reason for this change, was to avoid warnings about, and the risk of
+errors from casting an int up to a pointer.
+
+Limitations
+
+The scanner keeps track of an array of 100 strings. This array is always NULL
+terminated, so the scanner can handle lines containing up to 99 words.

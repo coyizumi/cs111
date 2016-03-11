@@ -1,0 +1,8 @@
+cat.c:
+
+The goal of cat is to read filenames from the arguments passed in, attempt to open each file, then dump the contents of each file to stdout.
+
+This will be accomplished in two main steps:
+
+1. A main loop that loops through argv, opening each file one at a time, dumping the contents, and then closing the file. If any of the steps results in an error, an error message will be printed and the program aborted with a non-zero exit status.
+2. A dump_file function which will take in a file opened in the main loop and dump its contents to stdout. If any reads or writes results in an error, an error message will be printed and the function will return a non-zero value, signalling to main that the program should be aborted with a non-zero exit status.
