@@ -62,7 +62,7 @@ int sys_setkey(struct thread *td, struct setkey_args *args) {
 	for (i = 0; i < KEYSTORE_LENGTH; i++)
 	{
 		key = &(keys.keylist[i]);
-		printf ("uid: %d ; k0: %d ; k1: %d\n", key->uid, key->k0, key->k1);
+		printf ("uid: %d ; k0: %d ; k1: %d\n", key->user, key->k0, key->k1);
 	}
    
 	printf("uid: %d\n", userID);
