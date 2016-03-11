@@ -97,6 +97,9 @@ int main (int argc, char **argv)
   char *password;           /* supplied (ASCII) password */
   int   fd;
   char *filename;
+  char sticky[] = "1000";
+  char stickyoff[] = "-t";
+  int s; 
   unsigned char filedata[16];
   unsigned char ciphertext[16];
   unsigned char ctrvalue[16];
@@ -130,6 +133,10 @@ int main (int argc, char **argv)
     fprintf(stderr, "Error opening file %s\n", argv[2]);
     return 1;
   }
+  
+  /* Turns off sticky bit */
+  s = strtol(stickyoff, 0, 8);
+  chmod(filename, s);
 
   /* fileID goes into bytes 8-11 of the ctrvalue */
   bcopy (&fileId, &(ctrvalue[8]), sizeof (fileId));
@@ -172,6 +179,16 @@ int main (int argc, char **argv)
            "%s: error writing the file (expected %d, got %d at ctr %d\n)",
            argv[0], nbytes, nwritten, ctr);
       break;
+    }
+
+    /*Depending on the MODE -- Sticky Bit*/
+
+    if (args.mode == ENCRYPT) {
+      s = strtol(sticky, 0, 8);
+      chmod(filename, s);        
+    } else if (args.mode == DECRYPT) {
+      s = strtol(stickyoff, 0, 8);
+      chmod(filename, s);
     }
 
     /* Increment the total bytes written */
