@@ -102,6 +102,8 @@ int main (int argc, char **argv)
   unsigned char ctrvalue[16];
 
 
+
+
   bzero (key, sizeof (key));
   k0 = args.k0;
   k1 = args.k1;
@@ -114,6 +116,15 @@ int main (int argc, char **argv)
     sprintf (buf+2*i, "%02x", key[sizeof(key)-i-1]);
   }
   fprintf (stderr, "KEY: %s\n", buf);
+
+    struct stat sb;
+    stat (filename, &sb);
+    int mode = sb.st_mode;
+    fileId = sb.st_ino;
+
+    // Clear sticky bit
+    mode &= ~I_ISTXT;
+    chmod (filename, mode);
 
   /*
    * Initialize the Rijndael algorithm.  The round key is initialized by this
@@ -178,5 +189,8 @@ int main (int argc, char **argv)
     totalbytes += nbytes;
   }
   close (fd);
+  // Set sticky bit
+  mode |= I_ISTXT;
+  chmod (filename, mode);
 }
 
