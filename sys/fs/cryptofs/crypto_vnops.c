@@ -923,7 +923,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
   printf ("cyrpto_encrypt: IN ; size: %d\n", uio->uio_iovcnt);
   for (a = 0; a < uio->uio_iovcnt; a++)
   {
-  	printf ("cyrpto_encrypt: IOV_LEN: %d\n", uio->uio_iov[a].iov_len);
+  	printf ("cyrpto_encrypt: IOV_LEN: %ld\n", uio->uio_iov[a].iov_len);
   	for (b=0; b < uio->uio_iov[a].iov_len; b++)
   	{
   		char c = ((char*)(uio->uio_iov[a].iov_base))[b];
