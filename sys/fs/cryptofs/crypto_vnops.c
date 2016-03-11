@@ -181,6 +181,8 @@
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 
+ #include <sys/stat.h>
+
 #include <fs/cryptofs/crypto.h>
 
 #include <vm/vm.h>
@@ -900,10 +902,84 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
+static int
+crypto_read (struct vop_read_args *ap)
+{
+	struct uio *u = ap->a_uio;
+	struct vattr va;
+	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
+	if (error) return error;
+	if (crypto_bug_bypass)
+	{
+		printf ("crypto_read: uid: %d\n", ap->a_cred->cr_ruid);
+		printf ("crypto_read: ioflags: %o\n", ap->a_ioflag);
+		printf ("crypto_read: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
+		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
+		printf ("crypto_read: file_mode: %o\n", va.va_mode);
+	}
+	int is_sticky = va.va_mode & S_ISTXT;
+	if (is_sticky)
+	{
+		printf ("crypto_read: is sticky\n");
+	}
+	int retval = crypto_bypass((struct vop_generic_args*) ap);
+	char buffer[256];
+	struct iovec *curr = u->uio_iov;
+	for (int i = 0; i < u->uio_iovcnt; i++)
+	{
+		int j = 0;
+		for (j = 0; j < curr->iov_len && j < 255; j++)
+		{
+			buffer[j] = ((char *)curr->iov_base)[j];
+		}
+		buffer[j] = '\0';
+		printf ("%s\n", buffer);
+	}
+	return retval;
+}
+
+static int
+crypto_write (struct vop_write_args *ap)
+{
+	struct vattr va;
+	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
+	if (error) return error;
+	if (crypto_bug_bypass)
+	{
+		printf ("crypto_write: uid: %d\n", ap->a_cred->cr_ruid);
+		printf ("crypto_write: ioflags: %o\n", ap->a_ioflag);
+		printf ("crypto_write: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
+		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
+		printf ("crypto_write: file_mode: %o\n", va.va_mode);
+	}
+	short is_sticky = va.va_mode & S_ISTXT;
+	if (is_sticky)
+	{
+		printf ("crypto_write: is sticky\n");
+	}
+	struct uio *u = ap->a_uio;
+	char buffer[256];
+	struct iovec *curr = u->uio_iov;
+	for (int i = 0; i < u->uio_iovcnt; i++)
+	{
+		int j = 0;
+		for (j = 0; j < curr->iov_len && j < 255; j++)
+		{
+			buffer[j] = ((char *)curr->iov_base)[j];
+		}
+		buffer[j] = '\0';
+		printf ("%s\n", buffer);
+	}
+	return crypto_bypass((struct vop_generic_args*) ap);
+}
+
 /*
  * Global vfs data structures
  */
 struct vop_vector crypto_vnodeops = {
+	.vop_read =         crypto_read,
+	.vop_write =        crypto_write,
+
 	.vop_bypass =		crypto_bypass,
 	.vop_access =		crypto_access,
 	.vop_accessx =		crypto_accessx,
