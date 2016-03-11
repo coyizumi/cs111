@@ -1037,6 +1037,8 @@ crypto_read (struct vop_read_args *ap)
 			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
 		}
 	}
+	curr1->iov_base=saved_pnt;
+	uiomove(buff, curr1->iov_len, u);
 	return retval;
 }
 
