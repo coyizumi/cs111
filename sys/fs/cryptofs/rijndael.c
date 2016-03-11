@@ -14,8 +14,6 @@
 
 #include "rijndael.h"
 
-static char rcsid[] = "$Id: rijndael.c,v 1.1 2003/04/15 00:22:49 elm Exp elm $";
-
 typedef unsigned long u32;
 typedef unsigned char u8;
 
