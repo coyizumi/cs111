@@ -999,7 +999,7 @@ crypto_read (struct vop_read_args *ap)
 	}
 
 	struct uio *u = ap->a_uio;
-	char *buff[u->uio_resid];
+	char buff[u->uio_resid];
 	void *old_base = u->uio_iov->iov_base;
 	int old_flag = u->uio_segflg;
 	u->uio_iov->iov_base = buff;
