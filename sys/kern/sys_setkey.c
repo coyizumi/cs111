@@ -46,7 +46,7 @@ int sys_setkey(struct thread *td, struct setkey_args *args) {
 	struct user_keys *key, *first_invalid = NULL;
 	userID = (td->td_ucred->cr_uid);
 	if (args->k0 || args->k1)
-		if (keys->len == KEYSTORE_LENGTH)
+		if (keys.len == KEYSTORE_LENGTH)
 			return 1;
 
 	for (i = 0; i < KEYSTORE_LENGTH; i++)
@@ -64,7 +64,7 @@ int sys_setkey(struct thread *td, struct setkey_args *args) {
 	first_invalid->k0 = args->k0;
 	first_invalid->k1 = args->k1;
 	first_invalid->valid = args->k0 || args->k1;
-	keys->len += first_invalid->valid - start;
+	keys.len += first_invalid->valid - start;
 
 	for (i = 0; i < KEYSTORE_LENGTH; i++)
 	{
