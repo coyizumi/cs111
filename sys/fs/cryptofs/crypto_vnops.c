@@ -985,6 +985,7 @@ crypto_read (struct vop_read_args *ap)
 {
 	struct vattr va;
 	uid_t uid = ap->a_cred->cr_ruid;
+	printf ("crypto_read:: %d\n", ap->a_uio->uio_iov->iov_len);
 	int error = VOP_GETATTR((ap)->a_vp, &va, (ap)->a_cred);
 	if (error) return error;
 	if (crypto_bug_bypass)
