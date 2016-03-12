@@ -922,6 +922,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
 
   	printf ("cyrpto_encrypt: IN ; size: %ld\n", length);
 
+  	// Move base back by offset so we can actually read the data!
   	char *iov_base = (char*)(uio->uio_iov->iov_base) - uio->uio_offset;
   	uio->uio_iov->iov_base = iov_base;
 
@@ -952,6 +953,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
     	/* XOR the result into the file data */
     	for (i = 0; i < KEYBITS; i++) 
     	{
+    		// Move on to next iovec or quit if we're done
     		if (iovec_ind >= uio->uio_iov[iovec_num].iov_len)
       		{
       			iovec_num++;
@@ -959,6 +961,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
       			if (iovec_num >= uio->uio_iovcnt)
       				return;
       		}
+      		// If we've written all we've planned to, get out
       		if (num_written >= length) return;
       		char *c = (((char*)(uio->uio_iov[iovec_num].iov_base)) + iovec_ind++);
         	*c ^= ciphertext[i];
@@ -978,9 +981,6 @@ crypto_read (struct vop_read_args *ap)
 	if (crypto_bug_bypass)
 	{
 		printf ("crypto_read: uid: %d\n", ap->a_cred->cr_ruid);
-		printf ("crypto_read: ioflags: %o\n", ap->a_ioflag);
-		printf ("crypto_read: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
-		printf ("crypto_read: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_read: file_mode: %o\n", va.va_mode);
 		printf ("crypto_read: fileid: %ld\n", va.va_fileid); //fileid is inode nr, given in stat
 	}
@@ -996,12 +996,10 @@ crypto_read (struct vop_read_args *ap)
 
 	int is_sticky = va.va_mode & S_ISTXT;
 
-	printf ("crypto_read: residb: %ld", u->uio_resid);
 	long resid = u->uio_resid;
 
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
-
-	printf ("crypto_read: resida: %ld\n", ap->a_uio->uio_resid);
+	if (retval) return retval;
 	long resid_diff = resid - u->uio_resid;
 
 	if (is_sticky)
@@ -1037,25 +1035,7 @@ crypto_write (struct vop_write_args *ap)
 	if (crypto_bug_bypass)
 	{
 		printf ("crypto_write: uid: %d\n", ap->a_cred->cr_ruid);
-		printf ("crypto_write: ioflags: %o\n", ap->a_ioflag);
-		printf ("crypto_write: desc_flags: %o\n", ap->a_gen.a_desc->vdesc_flags);
-		printf ("crypto_write: file_flags: %lo\n", va.va_flags);
 		printf ("crypto_write: file_mode: %o\n", va.va_mode);
-	}
-
-	char buffer[256];
-	struct uio *u = ap->a_uio;
-	struct iovec *curr = u->uio_iov;
-	for (int i = 0; i < u->uio_iovcnt; i++)
-	{
-		printf("crypto_read: iovlen: %ld", curr->iov_len);
-		int j = 0;
-		for (j = 0; j < curr->iov_len && j < 255; j++)
-		{
-			buffer[j] = ((char *)curr->iov_base)[j];
-		}
-		buffer[j] = '\0';
-		printf ("%s\n", buffer);
 	}
 
 	short is_sticky = va.va_mode & S_ISTXT;
@@ -1068,6 +1048,8 @@ crypto_write (struct vop_write_args *ap)
 			printf ("Keys are: %d %d\n", k0, k1);
 			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid, ap->a_uio->uio_resid);
 		}
+		else
+			return EPERM;
 	}
 	return crypto_bypass((struct vop_generic_args*) ap);
 }
