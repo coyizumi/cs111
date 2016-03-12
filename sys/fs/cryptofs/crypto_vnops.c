@@ -906,7 +906,7 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
-static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long length)
+static void crypto_encrypt (struct uio *uio, int k0, int k1, int fileid, long length)
 {
 	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   	unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
