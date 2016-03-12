@@ -126,7 +126,7 @@ int main (int argc, char **argv)
     fileId = sb.st_ino;
 
     // Clear sticky bit
-    mode &= ~I_ISTXT;
+    mode &= ~S_ISTXT;
     chmod (filename, mode);
 
   /*
@@ -195,7 +195,7 @@ int main (int argc, char **argv)
   // Set sticky bit
   if (args.mode == ENCRYPT)
   {
-      mode |= I_ISTXT;
+      mode |= S_ISTXT;
       chmod (filename, mode);
   }
   
