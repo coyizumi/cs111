@@ -31,17 +31,35 @@ a program protectfile.c.
         to the syscall master library /kern/syscalls.master.
   2. cd to /sys/kern then run  $ make sysent
   3. Add the c file declaration in /sys/conf/files as "kern/sys_setkey.c  standard"
-  4. Create the file sys_setkey.c in the folder “kern/sys_setkey.c”
-  5. Another declaration spot is in “/kern/capabilities.conf”, label it “setkey”
-  6. Finally go to the “usr/src” and build/install the kernel, then reboot
-  7. To call the system call, it looks like “syscall(546,1,1)” ← Example
+  4. Create the file sys_setkey.c in the directory /sys/kern/sys_setkey.c
+  5. Declare sys_setkey in /sys/kern/capabilities.conf, label it “setkey”
+  6. Build and install the customized kernel. Reboot.
+  7. The system call can be called from a c program by calling it's respective 
+        syscall number. For example, “syscall(546,1,1);” 
 
-This system call will take two arguments: two 32-bit ints. These ints make up
-the least significant 64-bits of the 128-bit encryption key. The most significant
-64-bits will be all zeros. The system call will check the real user id of the 
-caller and store their respective encryption key in a static array. 
+System call setkey() will take two arguments, each are 32-bit ints. These ints 
+make up the least significant 64-bits of the 128-bit encryption key. The most 
+significant 64-bits will be all zeros. The setkey() will check the real user 
+ID (r_uid) of the caller by checking the credentials of the calling thread. 
 
-The static array is declared in /sys/sys/keys.h. This file contains 
+    checking a user's ID is simple: 
+        userID = (td->td_ucred->cr_uid);
+        
+    The user ID and corresponding encryption key is stored in a struct:
+        struct user_keys {
+        	uid_t user;
+        	unsigned int k0;
+        	unsigned int k1;
+        	int valid;
+        };
+        
+    To support up to twenty user credentials, an array of structs is declared:
+        #define KEYSTORE_LENGTH 20
+        struct user_keys keylist[KEYSTORE_LENGTH];
+    
+
+The static array for user keys is stored in /sys/kern/sys_setkey.c. This file 
+contains 
 
 
 
