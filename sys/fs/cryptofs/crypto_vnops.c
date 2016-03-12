@@ -922,7 +922,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
 
   printf ("cyrpto_encrypt: IN ; size: %ld\n", length);
 
-  char *iov_base = (char*)(uio->uio_iovec->iov_base) - uio->uio_offset;
+  char *iov_base = (char*)(uio->uio_iov->iov_base) - uio->uio_offset;
   uio->uio_iov->iov_base = iov_base;
 
   /*
