@@ -4,14 +4,13 @@
  /                     #######################                    /
 /****************************************************************/
 Team: cmhumphr, jwvance, tmakwan
-
+Date: 3/12/16
 
 #---------------------------------------------------------------------------#
 # PART 1: Implementing a custom system call, setkey()                       #
-#                                                                           #
 #---------------------------------------------------------------------------#
 
-//--Steps for Implementing a System Call--
+---Steps for Implementing a System Call---
   1. Add “ STD { int setkey(unsigned int k0, unsigned int k1);}” to the end of the file /kern/syscalls.master
   2. cd to /sys/kern then do “make sysent”
   3. Also have to add in the c file declaration in “/sys/conf/files” label it as “kern/sys_setkey.c    standard”
@@ -21,10 +20,42 @@ Team: cmhumphr, jwvance, tmakwan
   7. To call the system call, it looks like “syscall(546,1,1)” ← Example
 
 
+
 #---------------------------------------------------------------------------#
-# PART 2: The setkey.c program                                              #
-#                                                                           #
+# PART 2: Mounting NullFS                                                   #
 #---------------------------------------------------------------------------#
+NullFS is a stackable file system that makes up the base for CryptoFS. 
+NullFS is a copy of the null layer, which was modified to implement the 
+encryption/decryption capability. 
+
+NullFS is already installed on FreeBSD. In order to mount it on a directory, 
+the command $ mount_nullfs can be used. This command takes in two arguments: 
+    1)The path to the directory to mimic 
+    2) the mount point. 
+    
+For example:
+    $ mkdir ~/test
+    $ sudo mount_nullfs /usr/bin test
+Now /test is /usr/bin with nullfs on top of it. It works a bit like symbolic
+links.
+
+NullFS source code locations:
+    - /sys/fs/nullfs
+    - /sbin/mount_nullfs/mount_nullfs.c
+    - /sys/modules/nullfs/Makefile   (used to build code)
+
+#---------------------------------------------------------------------------#
+# PART 3: The setkey.c program                                              #
+#---------------------------------------------------------------------------#
+    The general purpose of this program is to assign a user with 
+
+
+
+
+#---------------------------------------------------------------------------#
+# PART 4: The protectfile.c program                                         #
+#---------------------------------------------------------------------------#
+
 
 
 
