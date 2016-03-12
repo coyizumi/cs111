@@ -72,31 +72,53 @@ that gives the two keys associated with a given uid.
 #---------------------------------------------------------------------------#
 # PART 2: NullFS to CryptoFS                                                #
 #---------------------------------------------------------------------------#
-NullFS is a stackable file system that makes up the basis for CryptoFS. 
-NullFS is a copy of the null layer, which was modified to implement the 
-encryption/decryption capability. 
 
-NullFS is already installed on FreeBSD. In order to mount it on a directory, 
-the command $ mount_nullfs can be used. This command takes in two arguments: 
-    1)The path to the directory to mimic 
-    2) the mount point. 
-    
-    For example:
-        $ mkdir ~/test
-        $ sudo mount_nullfs /usr/bin test
-        
-Now /test is /usr/bin with nullfs on top of it. It works a bit like symbolic
-links do. To set up CryptoFS, nullFS must be copied to a new sys/modules/cryptofs 
-directory. ie.:
-    $ mkdir /sys/modules/cryptofs
-    $ cp /sys/modules/nullfs /sys/modules/cryptofs
-Once this is complete, all instances of variables referring to nullFS 
-will be changed to cryptofs, this includes the Makefile. /sbin/mount_nullfs
-must be modified to include "cryptofs" as a file system type. ie.:
-    $ mkdir /sbin/cryptofs
-    $ cp sbin/mount_nullfs sbin/mount_cryptofs
-All references to "nullfs" in mount_cryptofs must be changed to "cryptofs".
-    
+The cryptofs filesystem is a stackable filesystem extended from NullFS.
+In addition to the standard NullFS behaviors, it encrypts writes and
+decrypts reads on files with the sticky bit set.
+
+To implement cryptofs, we first copied the NullFS code and replaced
+all of the variable names with our own. We then added the crypto_read
+and crypto_write functions and added them to the vnodeops struct for
+cryptofs.
+
+Initially these read and write functions simply passed their arguments
+on to the bypass function, which passed them to the lower filesystem.
+We then had the functions determine if the files sticky bit was set.
+This was done by using the VOP_GETATTR command and using the va_mode
+field of the vattr struct.
+
+Next we began work on the encryption. For the write function, this was
+easy. The data being passed to the lower layer is contained in a uio
+struct. To encrypt this data, we simply looped over the uio's iovec
+encrypting each byte.
+
+The bulk of our efforts on the cryptofs filesystem consisted of figuring
+out how to intercept the data from the read call. It received the same
+uio struct, but the data was not entered into the struct until after
+being passed to the lower filesystem. This data was being flushed on
+entry though, so encrypting it afterward had no affect.
+
+We solved this problem by replacing the buffer within the uio with
+our own buffer. After returning from the lower filesystem, we encrypt
+the data in this buffer and then copy it into the uio's original buffer.
+
+To compile the new filesystem into the kernel we performed the following
+steps:
+
+  1. Created the sys/modules/cryptofs directory
+  2. Copied the files from sys/modules/nullfs to this new directory
+  3. Replaced all references to nullfs with cryptofs
+  4. Added a cryptofs entry in sys/modules/Makefile
+
+To mount the cryptofs filesystem, we created the program mount_cryptofs.
+To do this we did the following:
+
+  1. Copy sbin/mount_nullfs to sbin/mount_cryptofs
+  2. Replace all references to nullfs with cryptofs
+  3. Edit mount.c in sbin/mount to reference cryptofs
+
+To build mount_cryptofs, simply run the makefile found in sbin/mount_cryptofs    
 
 #---------------------------------------------------------------------------#
 # PART 3: The setkey.c program                                              #
@@ -115,9 +137,9 @@ of the user key table.
 #---------------------------------------------------------------------------#
 # PART 4: The protectfile.c program                                         #
 #---------------------------------------------------------------------------#
-protectfile.c is the heart of the CryptoFS. It is responsible for encrypting 
-and decrypting files. The behavior of protectfile.c varies  based on which 
-arguments are passed onto the command line.
+The protectfile program is responsible for encrypting and decrypting
+files. The behavior of protectfile.c varies  based on which arguments 
+are passed onto the command line.
 
 The program takes four arguments:
 	1. ./protectfile
