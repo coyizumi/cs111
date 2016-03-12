@@ -11,9 +11,14 @@ Date: 3/12/16
 #---------------------------------------------------------------------------#
 The goal for assignment 4 is to implement a file system in FreeBSD that will
 encrypt and decrypt files upon write and read; namely: CryptoFS. Files will
-be encrypted using the AES (Advanced Encryption Standard) encryption on a per
-file basis. 
+be encrypted using AES (Advanced Encryption Standard) encryption on a per
+file basis. CryptoFS will check the sticky bit of files (permission bit), if
+the bit is set, then the file has been encrypted. If not, it exists in its
+plaintext form. 
 
+There are four major parts to this assignment: implementing a system call,
+mounting nullFS and modifying it, creating a program setkey.c, and creating
+a program protectfile.c.
 
 
 #---------------------------------------------------------------------------#
@@ -24,17 +29,41 @@ file basis.
   1. Append “546  AUE_NULL  STD { int setkey(unsigned int k0, unsigned int k1);}” 
         to the syscall master library /kern/syscalls.master.
   2. cd to /sys/kern then run  $ make sysent
-  3. Also have to add in the c file declaration in “/sys/conf/files” label it as “kern/sys_setkey.c    standard”
-  4. Create the file sys_setkey.c in the folder “kern/sys_setkey.c”
-  5. Another declaration spot is in “/kern/capabilities.conf”, label it “setkey”
-  6. Finally go to the “usr/src” and build/install the kernel, then reboot
-  7. To call the system call, it looks like “syscall(546,1,1)” ← Example
+  3. Add the c file declaration in /sys/conf/files as "kern/sys_setkey.c  standard"
+  4. Create the file sys_setkey.c in the directory /sys/kern/sys_setkey.c
+  5. Declare sys_setkey in /sys/kern/capabilities.conf, label it “setkey”
+  6. Build and install the customized kernel. Reboot.
+  7. The system call can be called from a c program by calling it's respective 
+        syscall number. For example, “syscall(546,1,1);” 
+
+System call setkey() will take two arguments, each are 32-bit ints. These ints 
+make up the least significant 64-bits of the 128-bit encryption key. The most 
+significant 64-bits will be all zeros. setkey() will check the real user ID 
+(r_uid) of the caller by checking the credentials of the calling thread. 
+
+    Checking a user's ID: 
+        userID = (td->td_ucred->cr_uid);
+        
+    The user ID and corresponding encryption key is stored in a struct:
+        struct user_keys {
+        	uid_t user;
+        	unsigned int k0;
+        	unsigned int k1;
+        	int valid;
+        };
+        
+    To support up to twenty user credentials, an array of structs is declared:
+        #define KEYSTORE_LENGTH 20
+        struct user_keys keylist[KEYSTORE_LENGTH];
+
+The static array for user keys is stored in /sys/kern/sys_setkey.c. This file 
+contains 
 
 
 #---------------------------------------------------------------------------#
-# PART 2: Mounting NullFS                                                   #
+# PART 2: NullFS to CryptoFS                                                #
 #---------------------------------------------------------------------------#
-NullFS is a stackable file system that makes up the base for CryptoFS. 
+NullFS is a stackable file system that makes up the basis for CryptoFS. 
 NullFS is a copy of the null layer, which was modified to implement the 
 encryption/decryption capability. 
 
@@ -43,28 +72,75 @@ the command $ mount_nullfs can be used. This command takes in two arguments:
     1)The path to the directory to mimic 
     2) the mount point. 
     
-For example:
-    $ mkdir ~/test
-    $ sudo mount_nullfs /usr/bin test
+    For example:
+        $ mkdir ~/test
+        $ sudo mount_nullfs /usr/bin test
+        
 Now /test is /usr/bin with nullfs on top of it. It works a bit like symbolic
-links.
-
-NullFS source code locations:
-    - /sys/fs/nullfs
-    - /sbin/mount_nullfs/mount_nullfs.c
-    - /sys/modules/nullfs/Makefile   (used to build code)
+links do. To set up CryptoFS, nullFS must be copied to a new sys/modules/cryptofs 
+directory. ie.:
+    $ mkdir /sys/modules/cryptofs
+    $ cp /sys/modules/nullfs /sys/modules/cryptofs
+Once this is complete, all instances of variables referring to nullFS 
+will be changed to cryptofs, this includes the Makefile. /sbin/mount_nullfs
+must be modified to include "cryptofs" as a file system type. ie.:
+    $ mkdir /sbin/cryptofs
+    $ cp sbin/mount_nullfs sbin/mount_cryptofs
+All references to "nullfs" in mount_cryptofs must be changed to "cryptofs".
+    
 
 #---------------------------------------------------------------------------#
 # PART 3: The setkey.c program                                              #
 #---------------------------------------------------------------------------#
-    The general purpose of this program is to assign a user with 
+The general purpose of this program is to assign the following user using the
+setkey program a special key (k0 and k1) to their corresponding userID.
+The reason for this is being that with this special key in the table, the 
+user is only allowed to encrypt/decrypt the file with this special key in 
+the table.
 
-
+The way to execute this program is after building it from the makefile with
+"make all" the following "setkey" program is produced. 
+Running it with "./setkey (insert 16 bit key)", it will then parse that key
+into hex and store it into k0 and k1 in the static table. 
 
 
 #---------------------------------------------------------------------------#
 # PART 4: The protectfile.c program                                         #
 #---------------------------------------------------------------------------#
+
+Protectfile.c is the heart of the encrypt/decrypt program, a brief overview
+of what this program does is that it encrypts/decryptes the program based on
+the arguments passed into the command line.
+
+The program takes in the follow arguments in order
+	1) ./protectfile
+	2) -e (encrypt) or -d (decrypt)
+	3) 16 bit key
+	4) filename
+
+After taking in these arguments, protectfile does the following:
+	1) Reads the arguments and stores it in the appropriate spots.
+	2) Clears the sticky bit if it exists on the file
+	3) Generate the round key with Rijndael's algorithm
+	4) Enable files by creating a file descriptor
+	5) Loop that reads 16 bytes from the file, sets the CTR value to 
+	   be encrypted, calls the encryption routine to encrypt the CTR value.
+	   Then XOR the result into the file data, after doing so the program
+	   writes the result back to the file.
+	6) And lastly, closes the file. 
+	7) Depending if the file is going to be encrypted or decrypted, the 
+	   program itself will add on the sticky bit appropriately.
+
+
+
+
+
+
+
+
+
+
+
 
 
 

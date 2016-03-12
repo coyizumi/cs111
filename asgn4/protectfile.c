@@ -26,6 +26,7 @@ typedef struct arg_s
 void usage()
 {
     fprintf (stderr, "Usage: protectfile (-d | -e) key file\n");
+    fprintf (stderr, "       Make sure the key is 16 bits long\n");
 }
 
 int parse_hex_str(char *str, arg_s *result)
@@ -33,10 +34,16 @@ int parse_hex_str(char *str, arg_s *result)
     char *str_beg = str;
     char buff[18];
     int i = 0;
-    if (strlen(str) != 16) return -1;
+    if (strlen(str) != 16) {
+        printf("Error: Please enter a 16 bit key\n");
+        return -1;
+    }
     while (*str)
     {
-        if (!isxdigit(*str)) return -1;
+        if (!isxdigit(*str)) {
+            printf("Error: Insert a valid 16 bit key\n");
+            return -1;
+        }
         buff[i++] = *str++;
         if (i == 8) buff[i++] = '\0';
     }

@@ -23,10 +23,16 @@ int parse_hex_str(char *str, hexvalue *result)
     char *str_beg = str;
     char buff[18];
     int i = 0;
-    if (strlen(str) != 16) return -1;
+    if (strlen(str) != 16) {
+       printf("Error: Please enter a 16 bit key\n");
+       return -1;
+    }
     while (*str)
     {
-        if (!isxdigit(*str)) return -1;
+        if (!isxdigit(*str)) {
+           printf("Error: Insert a valid 16 bit key\n");
+           return -1;
+        }
         buff[i++] = *str++;
         if (i == 8) buff[i++] = '\0';
     }
@@ -40,7 +46,7 @@ int parse_hex_str(char *str, hexvalue *result)
 
 
 int main(int argc, char **argv) {
-   //Declaaring k0 and k1
+   //Declaring k0 and k1
    //Creates the struct to hold k0, and k1
    if (argc != 2) {
       printf("Please have only one argument -- The 16 digit hex\n");
