@@ -1,0 +1,34 @@
+#-------------------------------------------------/
+#   README.jwvance                               /
+#                                               /
+#   Jason Vance (jwvance) -- ID# 1376324       /
+#   3/11/16                                   /
+#--------------------------------------------/
+
+Contributions:
+
+jwvance (me): 
+  Early on, I worked on researching and testing how to get a 
+custom system call implemented. I went through many iterations,
+eventually laying the framework for what we needed. Timmy
+found some useful resources online which were necessary to
+finish the system call. I synthesized the majority of the 
+Design Doc, presenting the framework of the project in the
+most easily readable, information dense way possible. 
+
+cmhumphr:
+  Coy spearheaded the project by investigating the nullfs 
+filesystem and getting it mounted correctly. He rapidly modified
+it to the CryptoFS skeleton. Coy put in many hours combing 
+through source code and pinpointing key source files which 
+would need to be changed. He was very focused on getting 
+protectfile.c working, and did so single handedly. He wrote
+most of our projects parsing algorithms by himself. He even 
+went to office hours to figure out how read/write detection works. 
+
+tmakwan:
+	After a few late nights, Timmy was the one who finally broke
+through and got the system call working. Turned out there were 
+a few steps necessary that were missing from online tutorials.
+Timmy initiated the effort of getting setkey.c working. He and
+Coy got that program working.
