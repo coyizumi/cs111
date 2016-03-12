@@ -1,0 +1,30 @@
+    /****************************************************************/
+   /                   #######################                      /
+  /                    ## Asgn 4 Design Doc ##                     /
+ /                     #######################                    /
+/****************************************************************/
+Team: cmhumphr, jwvance, tmakwan
+
+
+#---------------------------------------------------------------------------#
+# PART 1: Implementing a custom system call, setkey()                       #
+#                                                                           #
+#---------------------------------------------------------------------------#
+
+//--Steps for Implementing a System Call--
+  1. Add “ STD { int setkey(unsigned int k0, unsigned int k1);}” to the end of the file /kern/syscalls.master
+  2. cd to /sys/kern then do “make sysent”
+  3. Also have to add in the c file declaration in “/sys/conf/files” label it as “kern/sys_setkey.c    standard”
+  4. Create the file sys_setkey.c in the folder “kern/sys_setkey.c”
+  5. Another declaration spot is in “/kern/capabilities.conf”, label it “setkey”
+  6. Finally go to the “usr/src” and build/install the kernel, then reboot
+  7. To call the system call, it looks like “syscall(546,1,1)” ← Example
+
+
+#---------------------------------------------------------------------------#
+# PART 2: The setkey.c program                                              #
+#                                                                           #
+#---------------------------------------------------------------------------#
+
+
+
