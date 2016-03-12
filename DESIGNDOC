@@ -11,15 +11,14 @@ Date: 3/12/16
 #---------------------------------------------------------------------------#
 The goal for assignment 4 is to implement a file system in FreeBSD that will
 encrypt and decrypt files upon write and read; namely: CryptoFS. Files will
-be encrypted using the AES (Advanced Encryption Standard) encryption on a per
+be encrypted using AES (Advanced Encryption Standard) encryption on a per
 file basis. CryptoFS will check the sticky bit of files (permission bit), if
-the bit is set, then the file has been encrypted. If not, it exists in it's
+the bit is set, then the file has been encrypted. If not, it exists in its
 plaintext form. 
 
 There are four major parts to this assignment: implementing a system call,
 mounting nullFS and modifying it, creating a program setkey.c, and creating
 a program protectfile.c.
-
 
 
 #---------------------------------------------------------------------------#
@@ -39,10 +38,10 @@ a program protectfile.c.
 
 System call setkey() will take two arguments, each are 32-bit ints. These ints 
 make up the least significant 64-bits of the 128-bit encryption key. The most 
-significant 64-bits will be all zeros. The setkey() will check the real user 
-ID (r_uid) of the caller by checking the credentials of the calling thread. 
+significant 64-bits will be all zeros. setkey() will check the real user ID 
+(r_uid) of the caller by checking the credentials of the calling thread. 
 
-    checking a user's ID is simple: 
+    Checking a user's ID: 
         userID = (td->td_ucred->cr_uid);
         
     The user ID and corresponding encryption key is stored in a struct:
@@ -56,16 +55,15 @@ ID (r_uid) of the caller by checking the credentials of the calling thread.
     To support up to twenty user credentials, an array of structs is declared:
         #define KEYSTORE_LENGTH 20
         struct user_keys keylist[KEYSTORE_LENGTH];
-    
 
 The static array for user keys is stored in /sys/kern/sys_setkey.c. This file 
 contains 
 
 
 #---------------------------------------------------------------------------#
-# PART 2: Mounting NullFS                                                   #
+# PART 2: NullFS to CryptoFS                                                #
 #---------------------------------------------------------------------------#
-NullFS is a stackable file system that makes up the base for CryptoFS. 
+NullFS is a stackable file system that makes up the basis for CryptoFS. 
 NullFS is a copy of the null layer, which was modified to implement the 
 encryption/decryption capability. 
 
@@ -74,21 +72,18 @@ the command $ mount_nullfs can be used. This command takes in two arguments:
     1)The path to the directory to mimic 
     2) the mount point. 
     
-For example:
-    $ mkdir ~/test
-    $ sudo mount_nullfs /usr/bin test
+    For example:
+        $ mkdir ~/test
+        $ sudo mount_nullfs /usr/bin test
+        
 Now /test is /usr/bin with nullfs on top of it. It works a bit like symbolic
-links.
+links do.
 
-NullFS source code locations:
-    - /sys/fs/nullfs
-    - /sbin/mount_nullfs/mount_nullfs.c
-    - /sys/modules/nullfs/Makefile   (used to build code)
 
 #---------------------------------------------------------------------------#
 # PART 3: The setkey.c program                                              #
 #---------------------------------------------------------------------------#
-    The general purpose of this program is to assign a user with 
+The general purpose of this program is to assign a user with 
 
 
 
