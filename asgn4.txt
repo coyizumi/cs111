@@ -1,0 +1,29 @@
+Team:
+Coy Humphrey (Captain)
+Timmy Ma Kwan
+Jason Vance
+
+See DESIGNDOC in the root of the asgn4 branch for our design doc
+
+See the asgn4 directory in the asgn4 branch for miscelanious code and our READMEs
+
+NOTES:
+
+protectfile and cryptofs currently behave slightly differently when encrypting,
+and are not currently compatible. They each work individually.
+
+Protectfile can be tested by running it on the same file twice.
+
+cryptofs can be tested with the following example commands:
+
+setkey <16 digit hex key>
+mount_cryptofs src target
+touch target/testfile
+chmod +t target/testfile
+echo "Hello" > target/testfile
+cat target/testfile
+  ** Should be "Hello"
+cat src/testfile
+  ** Garbage **
+
+To build mount_cryptofs, navigate to sbin/mount_cryptofs and run make
