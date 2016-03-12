@@ -77,15 +77,20 @@ the command $ mount_nullfs can be used. This command takes in two arguments:
         $ sudo mount_nullfs /usr/bin test
         
 Now /test is /usr/bin with nullfs on top of it. It works a bit like symbolic
-links do.
+links do. To set up CryptoFS, nullFS must be copied to a new sys/modules/cryptofs 
+directory. ie.:
+    $ mkdir /sys/modules/cryptofs
+    $ cp /sys/modules/nullfs /sys/modules/cryptofs
+Once this is complete, all instances of variables referring to nullFS 
+will be changed to cryptofs, this includes 
+
+
 
 
 #---------------------------------------------------------------------------#
 # PART 3: The setkey.c program                                              #
 #---------------------------------------------------------------------------#
 The general purpose of this program is to assign a user with 
-
-
 
 
 #---------------------------------------------------------------------------#
