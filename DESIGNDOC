@@ -82,10 +82,12 @@ directory. ie.:
     $ mkdir /sys/modules/cryptofs
     $ cp /sys/modules/nullfs /sys/modules/cryptofs
 Once this is complete, all instances of variables referring to nullFS 
-will be changed to cryptofs, this includes 
-
-
-
+will be changed to cryptofs, this includes the Makefile. /sbin/mount_nullfs
+must be modified to include "cryptofs" as a file system type. ie.:
+    $ mkdir /sbin/cryptofs
+    $ cp sbin/mount_nullfs sbin/mount_cryptofs
+All references to "nullfs" in mount_cryptofs must be changed to "cryptofs".
+    
 
 #---------------------------------------------------------------------------#
 # PART 3: The setkey.c program                                              #
@@ -100,7 +102,6 @@ The way to execute this program is after building it from the makefile with
 "make all" the following "setkey" program is produced. 
 Running it with "./setkey (insert 16 bit key)", it will then parse that key
 into hex and store it into k0 and k1 in the static table. 
-
 
 
 #---------------------------------------------------------------------------#
