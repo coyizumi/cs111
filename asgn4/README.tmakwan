@@ -1,0 +1,21 @@
+My work:
+Their were several parts of the project I've helped with such as creating the assignment 4 doc where
+we added all of our thoughts into. I've looked into systemcalls and implemented the system call for setkey. 
+Made sure it worked by debugging it with some test code and checking to make sure the userID and key were stored.
+I've helped Coy with some small features of the protectfile such as adding sticky bits and creating the setkey program.
+
+Jason Vance:
+Jason's a really good group partner, he helped debug our problems and threw out ideas of what needed to be done. He also,
+helped look into some of the stickybit things along with debugging for any sort of error that could come up in the 
+program. Jason also provided very good insight on the details of the assignment. 
+
+Coy:
+Coy worked hard on this assignment, I felt as if he gave the most encouraging hope to finish this assignment. His knowledge
+for this assignment helped me and Jason alot for what is needed to be understand. Coy coded a good portion of the filesystem
+along with the protectfile. He also helped reviewed the code that me and Jason were working on together and gave 
+it some fixes so it worked accordingly with his part of the assignment he's been working on.
+
+Overall:
+The group works really well with one another and is very encouraging about the work that everyones put into the assignment.
+
+** Copied from Master branch **
