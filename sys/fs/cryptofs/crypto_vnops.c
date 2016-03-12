@@ -930,6 +930,11 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, int fileid, long le
   	remaining_offset -= offset;
   	uio->uio_iov->iov_base = iov_base;
 
+  	for (i = 0; i < length && i < uio->uio_iov->iov_len; i++)
+  	{
+  		printf ("%c", iov_base[i]);
+  	}
+
   	/*
    	* Initialize the Rijndael algorithm.  The round key is initialized by this
    	* call from the values passed in key and KEYBITS.
