@@ -106,41 +106,24 @@ of the user key table.
 #---------------------------------------------------------------------------#
 # PART 4: The protectfile.c program                                         #
 #---------------------------------------------------------------------------#
+protectfile.c is the heart of the CryptoFS. It is responsible for encrypting 
+and decrypting files. The behavior of protectfile.c varies  based on which 
+arguments are passed onto the command line.
 
-protectfile.c is the heart of the encrypt/decrypt program, a brief overview
-of what this program does is that it encrypts/decryptes the program based on
-the arguments passed into the command line.
+The program takes four arguments:
+	1. ./protectfile
+	2. -e (encrypt) or -d (decrypt)
+	3. 16 bit key
+	4. filename
 
-The program takes in the follow arguments in order
-	1) ./protectfile
-	2) -e (encrypt) or -d (decrypt)
-	3) 16 bit key
-	4) filename
-
-After taking in these arguments, protectfile does the following:
-	1) Reads the arguments and stores it in the appropriate spots.
-	2) Clears the sticky bit if it exists on the file
-	3) Generate the round key with Rijndael's algorithm
-	4) Enable files by creating a file descriptor
-	5) Loop that reads 16 bytes from the file, sets the CTR value to 
-	   be encrypted, calls the encryption routine to encrypt the CTR value.
-	   Then XOR the result into the file data, after doing so the program
-	   writes the result back to the file.
-	6) And lastly, closes the file. 
-	7) Depending if the file is going to be encrypted or decrypted, the 
-	   program itself will add on the sticky bit appropriately.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+The behavior of protectfile can be summarized:
+	1. Parse the command line arguments
+	2. Clear the sticky bit if it is set
+	3. Generate the round key using Rijndael's algorithm
+	4. Enable files by creating a file descriptor
+	5. Encryption or decryption: protectfile enters a loop, reading 16 bytes from 
+		the file at a time, setting the CTR value to encrypted/decrypted, then calls 
+		the encryption/decryption routine to encrypt/decrypt the CTR value. Then 
+		XORs the result into the file data. The result is written back to the file.
+	6. Close the file. 
+	7. The sticky bit is set appropriately.
