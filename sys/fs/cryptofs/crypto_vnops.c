@@ -910,7 +910,6 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, int fileid, long le
 {
 	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   	unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
-  	char buf[100];
   	int i, ctr;
   	int nrounds;				/* # of Rijndael rounds */
   	unsigned char ciphertext[16];
