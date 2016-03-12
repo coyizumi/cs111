@@ -921,7 +921,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
   bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
 
   int a,b;
-  printf ("cyrpto_encrypt: IN ; size: %d\n", uio->length);
+  printf ("cyrpto_encrypt: IN ; size: %d\n", length);
 
 
   /*
