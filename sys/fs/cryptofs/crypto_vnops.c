@@ -910,6 +910,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, int fileid, long le
 {
 	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   	unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
+  	char buf[100];
   	int i, ctr;
   	int nrounds;				/* # of Rijndael rounds */
   	unsigned char ciphertext[16];
@@ -934,6 +935,12 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, int fileid, long le
   	{
   		printf ("%c", iov_base[i]);
   	}
+
+  	/* Print the key, just in case */
+  for (i = 0; i < sizeof (key); i++) {
+    sprintf (buf+2*i, "%02x", key[sizeof(key)-i-1]);
+  }
+  fprintf (stderr, "KEY: %s\n", buf);
 
   	/*
    	* Initialize the Rijndael algorithm.  The round key is initialized by this
