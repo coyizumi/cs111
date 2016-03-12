@@ -940,7 +940,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, int fileid, long le
   for (i = 0; i < sizeof (key); i++) {
     sprintf (buf+2*i, "%02x", key[sizeof(key)-i-1]);
   }
-  fprintf (stderr, "KEY: %s\n", buf);
+  printf ("KEY: %s\n", buf);
 
   	/*
    	* Initialize the Rijndael algorithm.  The round key is initialized by this
