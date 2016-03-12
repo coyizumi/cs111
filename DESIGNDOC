@@ -92,14 +92,15 @@ All references to "nullfs" in mount_cryptofs must be changed to "cryptofs".
 #---------------------------------------------------------------------------#
 # PART 3: The setkey.c program                                              #
 #---------------------------------------------------------------------------#
-setkey.c assigns the user a unique crypto key (k0 and k1), and saves it to 
+setkey.c assigns the user a unique crypto key (k0 and k1) and saves it to 
 memory with their respective r_uid (real user ID). This key allows users to
 encrypt and decrypt files.
 
-To execute this program, it first must be built using the Makefile. The 
-command "make all" will produce the setkey program. 
-Running it with "./setkey (insert 16 bit key)", it will then parse that key
-into hex and store it into k0 and k1 in the static table. 
+setkey.c must be built using the Makefile and the command "make all". This 
+will produce the setkey program. It can be run with the command:
+	$ ./setkey [16 bit hex key]
+setkey() parses the key into binary before storing it in the k0 and k1 fields
+of the user key table. 
 
 
 #---------------------------------------------------------------------------#
