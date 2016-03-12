@@ -1021,7 +1021,7 @@ crypto_read (struct vop_read_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
-			// crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
+			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
 		}
 	}
 	long resid_diff = resid - u->uio_resid;
