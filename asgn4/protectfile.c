@@ -92,13 +92,10 @@ int main (int argc, char **argv)
   int i, nbytes, nwritten , ctr;
   int totalbytes;
   int   k0, k1;
-  int fileId = 0x1234;          /* fake (in this example) */
+  int fileId;          /* fake (in this example) */
   int nrounds;              /* # of Rijndael rounds */
-  char *password;           /* supplied (ASCII) password */
   int   fd;
   char *filename;
-  char sticky[] = "1000";
-  char stickyoff[] = "0644";
   int s; 
   unsigned char filedata[16];
   unsigned char ciphertext[16];
