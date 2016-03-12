@@ -19,8 +19,8 @@ typedef struct arg_s
 {
     char *filename;
     mode mode;
-    int k0;
-    int k1; 
+    unsigned int k0;
+    unsigned int k1; 
 } arg_s;
 
 void usage()
