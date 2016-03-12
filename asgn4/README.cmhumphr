@@ -1,0 +1,22 @@
+My work:
+
+The bulk of my efforts went into setting up the cryptofs filesystem.
+This involved determining which functions needed to be created to
+intercept IO and implementing these functions. Write calls were easy
+to implement, because the data was passed in the function directly.
+Read calls took the majority of the time spent on this task as some
+hackery needed to be done to the uio struct passed in.
+
+I also helped Jason and Timmy in working on setkey and protectfile.
+
+Jason Vance:
+
+Jason worked on protectfile, and lead the efforts in writing the
+design doc.
+
+He helped Timmy determine how to add a system call to freebsd.
+
+Timmy Ma Kwan:
+
+Timmy worked on protect file and set key, and helped Jason figure out
+how to add a system call to freebsd.

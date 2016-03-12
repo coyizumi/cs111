@@ -54,11 +54,20 @@ significant 64-bits will be all zeros. setkey() will check the real user ID
         
     To support up to twenty user credentials, an array of structs is declared:
         #define KEYSTORE_LENGTH 20
-        struct user_keys keylist[KEYSTORE_LENGTH];
+        struct key_store {
+          struct user_keys keylist[KEYSTORE_LENGTH];
+          int len;
+        };
 
-The static array for user keys is stored in /sys/kern/sys_setkey.c. This file 
-contains 
+To insert a key into the array, we loop through the list keeping track
+of either the first empty slot (a slot is empty if valid is false) or
+a slot that has the same uid.
 
+In the case that the array is full, the system call returns non-zero
+for failure.
+
+To aid our cryptofs filesystem, we implement a function, get_keys_by_uid(), 
+that gives the two keys associated with a given uid.
 
 #---------------------------------------------------------------------------#
 # PART 2: NullFS to CryptoFS                                                #
