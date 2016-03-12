@@ -906,7 +906,7 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
-static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
+static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long length)
 {
 	unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
@@ -914,22 +914,14 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
   int nrounds;				/* # of Rijndael rounds */
   unsigned char ciphertext[16];
   unsigned char ctrvalue[16];
+  int num_written = 0;
 
   bzero (key, sizeof (key));;
   bcopy (&k0, &(key[0]), sizeof (k0));
   bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
 
   int a,b;
-  printf ("cyrpto_encrypt: IN ; size: %d\n", uio->uio_iovcnt);
-  for (a = 0; a < uio->uio_iovcnt; a++)
-  {
-  	printf ("cyrpto_encrypt: IOV_LEN: %ld\n", uio->uio_iov[a].iov_len);
-  	for (b=0; b < uio->uio_iov[a].iov_len; b++)
-  	{
-  		char c = ((char*)(uio->uio_iov[a].iov_base))[b];
-  		printf("%c", c);
-  	}
-  }
+  printf ("cyrpto_encrypt: IN ; size: %d\n", uio->length);
 
 
   /*
@@ -965,7 +957,9 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid)
       		if (iovec_num >= uio->uio_iovcnt)
       			return;
       	}
+      	if (num_written >= length) return;
       *(((char*)(uio->uio_iov[iovec_num].iov_base)) + iovec_ind++) ^= ciphertext[i];
+      num_written++;
     }
   }
   // printf ("cyrpto_encrypt: OUT\n");
@@ -1013,6 +1007,7 @@ crypto_read (struct vop_read_args *ap)
 	int retval = crypto_bypass((struct vop_generic_args*) ap);
 
 	printf ("crypto_read: resida: %ld\n", ap->a_uio->uio_resid);
+	long resid_diff = resid - u->uio_resid;
 
 	if (is_sticky)
 	{
@@ -1021,10 +1016,10 @@ crypto_read (struct vop_read_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
-			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
+			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid, resid_diff);
 		}
 	}
-	long resid_diff = resid - u->uio_resid;
+	
 	u->uio_resid = resid;
 	u->uio_iov->iov_base = old_base;
 	u->uio_resid = sizeof (buff);
@@ -1073,7 +1068,7 @@ crypto_write (struct vop_write_args *ap)
 		if (get_keys_by_uid(uid, &k0, &k1))
 		{
 			printf ("Keys are: %d %d\n", k0, k1);
-			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid);
+			crypto_encrypt (ap->a_uio, k0, k1, va.va_fileid, ap->a_uio->uio_resid);
 		}
 	}
 	return crypto_bypass((struct vop_generic_args*) ap);
