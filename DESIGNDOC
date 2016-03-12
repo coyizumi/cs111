@@ -107,6 +107,40 @@ into hex and store it into k0 and k1 in the static table.
 # PART 4: The protectfile.c program                                         #
 #---------------------------------------------------------------------------#
 
+Protectfile.c is the heart of the encrypt/decrypt program, a brief overview
+of what this program does is that it encrypts/decryptes the program based on
+the arguments passed into the command line.
+
+The program takes in the follow arguments in order
+	1) ./protectfile
+	2) -e (encrypt) or -d (decrypt)
+	3) 16 bit key
+	4) filename
+
+After taking in these arguments, protectfile does the following:
+	1) Reads the arguments and stores it in the appropriate spots.
+	2) Clears the sticky bit if it exists on the file
+	3) Generate the round key with Rijndael's algorithm
+	4) Enable files by creating a file descriptor
+	5) Loop that reads 16 bytes from the file, sets the CTR value to 
+	   be encrypted, calls the encryption routine to encrypt the CTR value.
+	   Then XOR the result into the file data, after doing so the program
+	   writes the result back to the file.
+	6) And lastly, closes the file. 
+	7) Depending if the file is going to be encrypted or decrypted, the 
+	   program itself will add on the sticky bit appropriately.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
