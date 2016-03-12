@@ -960,6 +960,7 @@ static void crypto_encrypt (struct uio *uio, int k0, int k1, long fileid, long l
       	char *c = (((char*)(uio->uio_iov[iovec_num].iov_base)) + iovec_ind++);
       	printf ("%c", *c);
         *c ^= ciphertext[i];
+        printf ("%c", *c):
       num_written++;
     }
   }
